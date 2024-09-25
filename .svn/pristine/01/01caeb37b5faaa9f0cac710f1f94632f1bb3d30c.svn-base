@@ -1,0 +1,170 @@
+package kr.happyjob.study.mypage.controller;
+
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
+
+import kr.happyjob.study.mypage.model.OrderModel;
+import kr.happyjob.study.mypage.model.ReturnModel;
+import kr.happyjob.study.mypage.service.MypageService;
+import kr.happyjob.study.product.model.CartModel;
+import kr.happyjob.study.product.model.ProductModel;
+
+@RequestMapping("/mypage/")
+@Controller
+public class MypageController {
+
+	// Set logger
+	private final Logger logger = LogManager.getLogger(this.getClass());
+
+	// Get class name for logger
+	private final String className = this.getClass().toString();
+	
+	@Autowired
+	MypageService mypageService;
+	
+	@GetMapping("cart.do")
+	public String cart() {
+		
+		return "mypage/cart";
+	}
+	
+	@PostMapping("cartList.do")
+	@ResponseBody
+	public ModelAndView cartList(HttpServletRequest request, HttpSession session) {
+		logger.info("+ Start " + className + ".cartList");
+		
+		String loginID = (String) session.getAttribute("loginId");
+		
+		ModelAndView mv = new ModelAndView();
+		
+		List<ProductModel> list = mypageService.cartList(loginID);
+		int cnt = mypageService.cartListCnt(loginID);
+		
+		mv.addObject("cartInfo", list);
+		mv.addObject("cnt", cnt);
+		mv.setViewName("mypage/cartList");
+		
+		return mv;
+	}
+	
+	@PostMapping("cartDelete.do")
+	@ResponseBody
+	public String cartDelete(@RequestBody CartModel cartModel, HttpSession session) {
+		logger.info("+ Start " + className + ".cartDelete");
+		logger.info("   - paramMap : " + cartModel);
+		
+		String loginID = (String) session.getAttribute("loginId");
+		
+		mypageService.cartDelete(cartModel, loginID);
+		
+		return "mypage/cartList";
+	}
+	
+	@PostMapping("cartCountChange.do")
+	@ResponseBody
+	public ProductModel cartCountChange(@RequestBody CartModel cartModel, HttpSession session) throws Exception {
+		logger.info("+ Start " + className + ".cartCountChange");
+		logger.info("   - paramMap : " + cartModel);
+		
+		String loginID = (String) session.getAttribute("loginId");
+		
+		ProductModel result = mypageService.cartCountChange(cartModel, loginID);
+		
+		return result;
+	}
+	
+	@PostMapping("productBuy.do")
+	@ResponseBody
+	public String productBuy(@RequestBody List<CartModel> list, HttpSession session) {
+		logger.info("+ Start " + className + ".cartCountChange");
+		logger.info("   - paramMap : " + list);
+		
+		String loginID = (String) session.getAttribute("loginId");
+		
+		mypageService.productBuy(list, loginID);
+		
+		return "mypage/obtainHistory.do";
+	}
+	
+	@GetMapping("order.do")
+	public String order() {
+		
+		return "mypage/order";
+	}
+	
+	@PostMapping("orderHistory.do")
+	@ResponseBody
+	public ModelAndView orderHistory(@RequestBody OrderModel model, HttpSession session) {
+		logger.info("+ Start " + className + ".orderHistory");
+		logger.info("model : " + model.toString());
+		
+		String loginID = (String) session.getAttribute("loginId");
+		
+		ModelAndView mv = new ModelAndView();
+		
+		List<OrderModel> result = mypageService.orderHistory(model, loginID);
+		int cnt = mypageService.orderHistoryCnt(model, loginID);
+		
+		mv.addObject("orderList", result);
+		mv.addObject("cnt", cnt);
+		mv.setViewName("mypage/orderList");
+		
+		return mv;
+	}
+	
+	@PostMapping("returnInfo.do")
+	@ResponseBody
+	public ProductModel returnInfo(@RequestBody ProductModel model) {
+		logger.info("+ Start " + className + ".returnInfo");
+		
+		return mypageService.returnInfo(model);
+	}
+	
+	@PostMapping("orderReturn.do")
+	@ResponseBody
+	public int orderReturn(@RequestBody ReturnModel model) {
+		logger.info("+ Start " + className + ".orderReturn");
+		logger.info(model);
+		
+		int result = mypageService.orderReturn(model);
+		
+		return result;
+	}
+	
+	@GetMapping("return.do")
+	public String returnHistory() {
+		return "mypage/returnHistory";
+	}
+	
+	@PostMapping("returnHistory.do")
+	@ResponseBody
+	public ModelAndView returnHistory(@RequestBody ReturnModel model, HttpSession session) {
+		logger.info("+ Start " + className + ".returnHistory");
+		
+		ModelAndView mv = new ModelAndView();
+		
+		String loginID = (String) session.getAttribute("loginId");
+		
+		List<ReturnModel> list = mypageService.returnHistory(model, loginID);
+		int cnt = mypageService.returnHistoryCnt(model, loginID);
+		
+		mv.addObject("cnt", cnt);
+		mv.addObject("list", list);
+		mv.setViewName("mypage/returnHistoryList");
+		
+		return mv;
+	}
+}

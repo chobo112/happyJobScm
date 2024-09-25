@@ -1,0 +1,432 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.executive.dao.ExecutiveDao">
+
+	<select id="storageAll" resultType="map">
+		
+		SELECT 
+			storage_code, storage_name, CONCAT(storage_loc, ' ', storage_detail_loc) as storage_loc , storage_manager
+		FROM 
+			tb_storage
+			<where>
+				<if test="(searchTitle != null) and (!''.equals(searchTitle))">
+					and storage_name Like CONCAT('%', #{searchTitle}, '%')
+				</if>
+			</where>
+		ORDER BY storage_code 
+	
+	</select>
+	
+	<select id="storageDetail" resultType="map">
+	
+		SELECT 
+			st.storage_name,IFNULL(it.item_name, '-') as item_name, IFNULL(it.item_price, '-') as item_price, 
+			IFNULL(ti.inventory_count, '-') as inventory_count, IFNULL(ti.item_code,'-') as item_code 
+		from
+			tb_storage st 
+		left outer join 
+			tb_inventory ti 
+		on
+			st.storage_code = ti.storage_code
+		left outer join 
+			tb_item_info it	
+		on
+			it.item_code = ti.item_code 
+		WHERE 
+			st.storage_code = #{storage_code}
+
+	</select>
+	
+	<select id="salesList" resultType="map">
+	
+		SELECT
+		    cu.cust_id,
+		    cu.cust_name,
+		    FORMAT(SUM(CASE WHEN ob.depositYN = 'Y' THEN it.item_price * ob.obtain_count ELSE 0 END), 0) AS sales,
+		    FORMAT(SUM(CASE WHEN ob.depositYN = 'N' THEN it.item_price * ob.obtain_count ELSE 0 END), 0) AS accounts_receivable,
+		    FORMAT(SUM(it.item_price * ob.obtain_count), 0) AS total_sum
+		FROM 
+		    tb_obtain ob
+		LEFT OUTER JOIN
+		    tb_item_info it ON ob.item_code = it.item_code 
+		LEFT OUTER JOIN
+		    tb_cust_info cu ON cu.cust_id = ob.cust_id
+		<where>
+			<if test="(searchTitle != null) and (!''.equals(searchTitle))">
+				and cu.cust_name Like CONCAT('%', #{searchTitle}, '%')
+			</if>
+			<if test="(searchStDate != null) and (!''.equals(searchStDate))">
+				and ob.obtain_date <![CDATA[>=]]> STR_TO_DATE(#{searchStDate}, '%Y-%m-%d')
+			</if>
+			<if test="(searchEdDate != null) and (!''.equals(searchEdDate))">
+				and ob.obtain_date <![CDATA[<=]]> STR_TO_DATE(#{searchEdDate}, '%Y-%m-%d')
+			</if>
+		</where>
+		GROUP BY
+		    cu.cust_id,
+		    cu.cust_name
+		LIMIT #{startSeq}, #{pageSize}
+		
+	</select>
+	
+	<select id="salesPage" resultType="int">
+	
+		SELECT 
+			COUNT(cust_name) 
+		FROM 
+			(
+			SELECT cu.cust_name 
+			FROM 
+			    tb_obtain ob
+			LEFT OUTER JOIN
+			    tb_item_info it ON ob.item_code = it.item_code 
+			LEFT OUTER JOIN
+			    tb_cust_info cu ON cu.cust_id = ob.cust_id
+		    <where>
+				<if test="(searchTitle != null) and (!''.equals(searchTitle))">
+					and cu.cust_name Like CONCAT('%', #{searchTitle}, '%')
+				</if>
+				<if test="(searchStDate != null) and (!''.equals(searchStDate))">
+					and ob.obtain_date <![CDATA[>=]]> STR_TO_DATE(#{searchStDate}, '%Y-%m-%d')
+				</if>
+				<if test="(searchEdDate != null) and (!''.equals(searchEdDate))">
+					and ob.obtain_date <![CDATA[<=]]> STR_TO_DATE(#{searchEdDate}, '%Y-%m-%d')
+				</if>
+			</where>
+			GROUP BY cu.cust_name 
+			) as A
+		
+	</select>
+		
+	<select id="salesTop" resultType="map">
+		SELECT
+		    cu.cust_id,
+		    cu.cust_name,
+		    SUM(CASE WHEN ob.depositYN = 'Y' THEN it.item_price * ob.obtain_count ELSE 0 END) AS sales,
+		    SUM(CASE WHEN ob.depositYN = 'N' THEN it.item_price * ob.obtain_count ELSE 0 END) AS accounts_receivable,
+		    SUM(it.item_price * ob.obtain_count) AS total_sum
+		FROM 
+		    tb_obtain ob
+		LEFT OUTER JOIN
+		    tb_item_info it ON ob.item_code = it.item_code 
+		LEFT OUTER JOIN
+		    tb_cust_info cu ON cu.cust_id = ob.cust_id
+		GROUP BY
+		    cu.cust_id,
+		    cu.cust_name
+		ORDER BY ${orderBy} DESC 
+	</select>
+	
+	<select id="orderApprovalY" resultType="map">
+	
+		SELECT 
+			od.product_name, DATE_FORMAT(od.order_date, "%Y-%m-%d") as order_date, od.order_count, oc.company_name, it.provide_value, (od.order_count * it.provide_value) as sum
+		FROM 
+			tb_order od
+		LEFT JOIN 
+			tb_item_info it
+		ON 
+			od.item_code = it.item_code
+		LEFT OUTER JOIN
+			tb_order_company oc
+		ON oc.company_seq = od.company_seq 
+		WHERE 
+			od.signYN = 'Y'
+		order by order_date desc
+		
+	</select>
+	
+	<select id="orderApprovalN" resultType="map">
+	
+		SELECT 
+			od.product_name, DATE_FORMAT(od.order_date, "%Y-%m-%d") as order_date, od.order_count, oc.company_name,
+			it.provide_value, (od.order_count * it.provide_value) as sum, od.seq
+		FROM 
+			tb_order od
+		LEFT JOIN 
+			tb_item_info it
+		ON 
+			od.item_code = it.item_code
+		LEFT OUTER JOIN
+			tb_order_company oc
+		ON oc.company_seq = od.company_seq
+		WHERE 
+			od.signYN = 'N'
+		order by order_date
+		
+	</select>
+	
+	
+	
+	<select id="returnApprovalY" resultType="map">
+		SELECT 
+			cu.cust_name, it.item_name, CONCAT(cu.cust_addr, ' ', cu.cust_detail_addr) as adr, re.return_count, 
+			it.item_price, (it.item_price *re.return_count ) as sum,
+			DATE_FORMAT(re.return_order_date, "%Y-%m-%d") as return_order_date, 
+			DATE_FORMAT(re.return_processing_date, "%Y-%m-%d") as return_processing_date, re.signYN 
+		from 
+			tb_return re
+		left join
+			tb_obtain ob
+		ON
+			re.seq = ob.seq
+		LEFT JOIN 
+			tb_item_info it
+		ON
+			ob.item_code = it.item_code 
+		LEFT JOIN 
+			tb_cust_info cu
+		ON
+			ob.cust_id = cu.cust_id 
+		WHERE
+			re.signYN = 'Y'
+	</select>
+	
+	<select id="returnApprovalN" resultType="map">
+		SELECT 
+			cu.cust_name, it.item_name, CONCAT(cu.cust_addr, ' ', cu.cust_detail_addr) as adr, re.return_count, 
+			it.item_price, (it.item_price *re.return_count ) as sum,
+			DATE_FORMAT(re.return_order_date, "%Y-%m-%d") as return_order_date, 
+			DATE_FORMAT(re.return_processing_date, "%Y-%m-%d") as return_processing_date, re.signYN, re.seq
+		from 
+			tb_return re
+		left join
+			tb_obtain ob
+		ON
+			re.seq = ob.seq
+		LEFT JOIN 
+			tb_item_info it
+		ON
+			ob.item_code = it.item_code 
+		LEFT JOIN 
+			tb_cust_info cu
+		ON
+			ob.cust_id = cu.cust_id 
+		WHERE
+			re.signYN = 'N'
+	</select>
+	
+	<update id="approvalY">
+		
+		UPDATE 
+			${str}
+		SET 
+			signYN = 'Y'
+		WHERE 
+			seq = #{seq} 
+	
+	</update>
+	
+	<select id="chart" resultType="map">
+    SELECT 
+        month,
+        SUM(total_amount) AS total_obtain,
+        SUM(total_order) AS total_order
+    FROM (
+        SELECT 
+            DATE_FORMAT(ob.obtain_date, '%Y-%m') AS month,
+            SUM(ob.obtain_count * it.item_price) AS total_amount,
+            NULL AS total_order
+        FROM 
+            tb_obtain ob
+        LEFT JOIN 
+            tb_item_info it ON ob.item_code = it.item_code
+        GROUP BY 
+            DATE_FORMAT(ob.obtain_date, '%Y-%m')
+        UNION ALL
+        SELECT 
+            DATE_FORMAT(od.order_date, '%Y-%m') AS month,
+            NULL AS total_amount,
+            SUM(od.order_count * it.item_price) AS total_order
+        FROM 
+            tb_order od
+        LEFT JOIN 
+            tb_item_info it ON od.item_code = it.item_code 
+        GROUP BY 
+            DATE_FORMAT(od.order_date, '%Y-%m')
+	    ) AS combined_data
+	    <where>
+	        <if test="searchStDate != null and searchStDate != ''">
+	            AND month <![CDATA[>=]]> DATE_FORMAT(#{searchStDate}, '%Y-%m')
+	        </if>
+	        <if test="searchEdDate != null and searchEdDate != ''">
+	            AND month <![CDATA[<=]]> DATE_FORMAT(#{searchEdDate}, '%Y-%m')
+	        </if>
+	    </where>
+	    GROUP BY 
+	        month
+	    ORDER BY 
+	        month
+	</select>
+
+	<select id="orderAppPage" resultType="int">
+	
+		 SELECT 
+			COUNT(*) 
+		FROM 
+			tb_order od
+		LEFT JOIN 
+			tb_item_info it
+		ON 
+			od.item_code = it.item_code
+		LEFT OUTER JOIN
+			tb_order_company oc
+		ON oc.company_seq = od.company_seq
+		LIMIT #{startSeq}, #{pageSize}
+	</select>
+
+	<select id="returnAppPage" resultType="int">
+	
+		SELECT 
+			count(*) 
+		from 
+			tb_return re
+		left join
+			tb_obtain ob
+		ON
+			re.seq = ob.seq
+		LEFT JOIN 
+			tb_item_info it
+		ON
+			ob.item_code = it.item_code 
+		LEFT JOIN 
+			tb_cust_info cu
+		ON
+			ob.cust_id = cu.cust_id 
+			
+	</select>
+
+	<select id="storageDetailJson" resultType="kr.happyjob.study.executive.model.StorageDetailModel">
+		SELECT 
+			st.storage_name	as storage_name,
+			it.item_name as item_name, 
+			it.item_price as item_price, 
+			ti.inventory_count as inventory_count, 
+			ti.item_code as item_code 
+		FROM
+			tb_storage st 
+		right join tb_inventory ti on st.storage_code = ti.storage_code
+		left join tb_item_info it on it.item_code = ti.item_code 
+		WHERE 
+			st.storage_code = #{storage_code}
+	</select>
+	
+	<select id="orderApprovalAll" resultType="map">
+	
+		SELECT 
+			od.product_name, 
+			DATE_FORMAT(od.order_date, "%Y-%m-%d") as order_date, 
+			od.order_count, 
+			oc.company_name, 
+			it.provide_value, 
+			(od.order_count * it.provide_value) as sum, 
+			od.signYN, 
+			od.seq
+		FROM 
+			tb_order od
+		LEFT JOIN 
+			tb_item_info it
+		ON 
+			od.item_code = it.item_code
+		LEFT OUTER JOIN
+			tb_order_company oc
+		ON oc.company_seq = od.company_seq 
+		<where>
+			<if test="(signYN != null) and (!''.equals(signYN))">
+				and signYN = #{signYN}
+			</if>
+		</where>
+		ORDER BY signYN, order_date
+		LIMIT #{startSeq}, #{pageSize}
+	</select>
+	
+	<select id="orderListCnt" resultType="int">
+	
+		SELECT 
+			COUNT(*)
+		FROM 
+			tb_order od
+		LEFT JOIN 
+			tb_item_info it
+		ON 
+			od.item_code = it.item_code
+		LEFT OUTER JOIN
+			tb_order_company oc
+		ON oc.company_seq = od.company_seq 
+		<where>
+			<if test="(signYN != null) and (!''.equals(signYN))">
+				and signYN = #{signYN}
+			</if>
+		</where>
+	</select>
+	
+	<select id="returnApprovalAll" resultType="map">
+		SELECT 
+			cu.cust_name, it.item_name, CONCAT(cu.cust_addr, ' ', cu.cust_detail_addr) as adr, 
+			re.return_count, 
+			it.item_price, 
+			(it.item_price *re.return_count ) as sum,
+			DATE_FORMAT(re.return_order_date, "%Y-%m-%d") as return_order_date, 
+			DATE_FORMAT(re.return_processing_date, "%Y-%m-%d") as return_processing_date, 
+			re.signYN, 
+			re.seq
+		from 
+			tb_return re
+		left join
+			tb_obtain ob
+		ON
+			re.seq = ob.seq
+		LEFT JOIN 
+			tb_item_info it
+		ON
+			ob.item_code = it.item_code 
+		LEFT JOIN 
+			tb_cust_info cu
+		ON
+			ob.cust_id = cu.cust_id
+		<where>
+			<if test="(signYN != null) and (!''.equals(signYN))">
+				and signYN = #{signYN}
+			</if>
+		</where>
+		ORDER BY signYN, return_order_date
+		LIMIT #{startSeq}, #{pageSize}
+	</select>
+	
+	<select id="returnListCnt" resultType="int">
+		SELECT 
+			COUNT(*)
+		from 
+			tb_return re
+		left join
+			tb_obtain ob
+		ON
+			re.seq = ob.seq
+		LEFT JOIN 
+			tb_item_info it
+		ON
+			ob.item_code = it.item_code 
+		LEFT JOIN 
+			tb_cust_info cu
+		ON
+			ob.cust_id = cu.cust_id
+		<where>
+			<if test="(signYN != null) and (!''.equals(signYN))">
+				and signYN = #{signYN}
+			</if>
+		</where>
+	</select>
+	
+	<update id="approvalYJson">
+		
+		UPDATE 
+			${str}
+		SET 
+			signYN = 'Y'
+		WHERE 
+			seq = #{seq}
+	
+	</update>
+
+</mapper>

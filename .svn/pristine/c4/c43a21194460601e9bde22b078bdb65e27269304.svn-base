@@ -1,0 +1,659 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.management.dao.ManagementDao">
+	
+	<select id="userList" resultType="kr.happyjob.study.management.model.ManagementModel">
+	/* kr.happyjob.study.management.dao.ManagementDao.userList */
+		SELECT
+    		name_union.loginID,
+    		tb_userinfo.user_type,
+    		name_union.name,
+    		tb_userinfo.job_code,
+    		tb_cust_info.cust_person,
+    		name_union.phone
+		FROM (
+    		SELECT loginID AS loginID , name AS name, hp AS phone  FROM tb_userinfo
+    		UNION ALL
+    		SELECT cust_id AS loginID , cust_name AS name, cust_person_ph AS phone FROM tb_cust_info
+		) AS name_union
+		LEFT JOIN tb_userinfo ON name_union.loginID = tb_userinfo.loginID
+		LEFT JOIN tb_cust_info ON name_union.loginID = tb_cust_info.cust_id
+		LIMIT #{startSeq}, #{pageSize}
+	</select>
+	
+	<select id="supplyList" resultType="kr.happyjob.study.management.model.ManagementModel">
+	/* kr.happyjob.study.management.dao.ManagementDao.supplyList */
+		SELECT
+			tb_cust_info.cust_id ,
+    		tb_cust_info.cust_name ,
+    		tb_cust_info.cust_person,
+    		tb_cust_info.cust_person_ph,
+    		tb_userinfo.loginID ,
+    		tb_userinfo.password 
+		FROM tb_cust_info
+		LEFT JOIN tb_userinfo ON tb_userinfo.cust_id = tb_cust_info.cust_id
+		GROUP by tb_cust_info.cust_name
+		LIMIT #{startSeq}, #{pageSize}
+	</select>
+	
+	<select id="userDetail" resultType="kr.happyjob.study.management.model.ManagementModel">
+	/* kr.happyjob.study.management.dao.ManagementDao.userDetail */
+		SELECT
+    		name , 
+    		user_type ,
+    		zip_code ,
+    		hp ,
+    		email ,
+    		loginID ,
+    		password ,
+    		addr ,
+    		addr_detail ,
+    		tb_cust_info.cust_person ,
+    		tb_cust_info.cust_name
+    	FROM tb_userinfo
+    	LEFT JOIN tb_cust_info ON tb_userinfo.cust_id = tb_cust_info.cust_id
+    	WHERE loginID = #{searchTitle}
+	</select>
+	
+	<select id="custProduct" resultType="kr.happyjob.study.management.model.ManagementModel">
+	/* kr.happyjob.study.management.dao.ManagementDao.custProduct */
+		SELECT to2.seq, to2.item_code , to2.obtain_count, to2.cust_id , tii.item_name, tii.item_price 
+		FROM tb_obtain as to2 
+		JOIN tb_item_info as tii ON to2.item_code = tii.item_code
+		WHERE to2.cust_id = #{paramId}
+	</select>
+	
+	<select id="custDetail" resultType="kr.happyjob.study.management.model.ManagementModel">
+	/* kr.happyjob.study.management.dao.ManagementDao.custDetail */
+		SELECT
+    		cust_name ,
+    		cust_person_ph ,
+    		cust_person
+    	FROM tb_cust_info
+    	WHERE cust_id = #{searchTitle}
+	</select>
+	
+	<select id="userSearch" resultType="kr.happyjob.study.management.model.ManagementModel">
+	/* kr.happyjob.study.management.dao.ManagementDao.userSearch */
+		SELECT
+    		name_union.loginID,
+    		tb_userinfo.user_type,
+    		name_union.name,
+    		tb_userinfo.job_code,
+    		tb_cust_info.cust_person,
+    		name_union.phone
+		FROM (
+    		SELECT loginID AS loginID , name AS name, hp AS phone  FROM tb_userinfo
+    		UNION ALL
+    		SELECT cust_id AS loginID , cust_name AS name, cust_person_ph AS phone FROM tb_cust_info
+		) AS name_union
+		LEFT JOIN tb_userinfo ON name_union.loginID = tb_userinfo.loginID
+		LEFT JOIN tb_cust_info ON name_union.loginID = tb_cust_info.cust_id
+		<where>
+			<if test="(searchCustName != null) and (!''.equals(searchCustName))">
+				and name_union.name Like CONCAT('%', #{searchCustName}, '%')
+			</if>
+			<if test="(searchCustPerson != null) and (!''.equals(searchCustPerson))">
+				and tb_cust_info.cust_person Like CONCAT('%', #{searchCustPerson}, '%')
+			</if>
+			<if test="(searchUserName != null) and (!''.equals(searchUserName))">
+				and name_union.name Like CONCAT('%', #{searchUserName}, '%')
+			</if>
+			<if test="(searchJob != null) and (!''.equals(searchJob))">
+				and tb_userinfo.user_type Like CONCAT('%', #{searchJob}, '%')
+			</if>
+		</where>
+		LIMIT #{startSeq}, #{pageSize}
+	</select>
+	
+	<select id="supplySearch" resultType="kr.happyjob.study.management.model.ManagementModel">
+	/* kr.happyjob.study.management.dao.ManagementDao.supplySearch */
+		SELECT
+			tb_cust_info.cust_id ,
+    		tb_cust_info.cust_name ,
+    		tb_cust_info.cust_person,
+    		tb_cust_info.cust_person_ph,
+    		tb_userinfo.loginID ,
+    		tb_userinfo.password 
+		FROM tb_cust_info
+		LEFT JOIN tb_userinfo ON tb_userinfo.cust_id = tb_cust_info.cust_id
+		<where>
+			<if test="(searchCustName != null) and (!''.equals(searchCustName))">
+				and tb_cust_info.cust_name Like CONCAT('%', #{searchCustName}, '%')
+			</if>
+			<if test="(searchItemName != null) and (!''.equals(searchItemName))">
+				and tb_cust_info.cust_id Like CONCAT('%', #{searchItemName}, '%')
+			</if>
+		</where>
+		GROUP by tb_cust_info.cust_name
+		LIMIT #{startSeq}, #{pageSize}
+	</select>
+	
+	<select id="supplySearch2" resultType="kr.happyjob.study.management.model.ManagementModel">
+	/* kr.happyjob.study.management.dao.ManagementDao.supplySearch2 */
+		SELECT
+			tci.cust_id ,
+  			tci.cust_name ,
+  			tci.cust_person,
+   			tci.cust_person_ph,
+   			tb_userinfo.loginID,
+   			tb_userinfo.password 
+		FROM
+			(SELECT item_code FROM (SELECT item_code FROM tb_item_info
+			<where>
+				<if test="(searchItemName != null) and (!''.equals(searchItemName))"> 
+			 		AND item_name Like CONCAT('%', #{searchItemName}, '%')
+			 	</if>
+			</where>
+			)item) code
+		LEFT JOIN tb_obtain to2 ON to2.item_code = code.item_code
+		LEFT JOIN tb_cust_info tci ON to2.cust_id = tci.cust_id 
+		LEFT JOIN tb_userinfo ON tb_userinfo.cust_id = tci.cust_id
+		GROUP BY tci.cust_name 
+		LIMIT #{startSeq}, #{pageSize}
+	</select>
+	
+	<select id="getCodeList" resultType="kr.happyjob.study.management.model.ManagementModel">
+	/* kr.happyjob.study.management.dao.ManagementDao.getCodeList */
+		SELECT	group_code ,
+				group_name ,
+				use_yn ,
+				reg_date
+			FROM tb_group_code
+			LIMIT #{startSeq}, #{pageSize}
+	</select>
+	
+		<select id="getDetailCodeList" resultType="kr.happyjob.study.management.model.ManagementModel">
+	/* kr.happyjob.study.management.dao.ManagementDao.getDetailCodeList */
+		SELECT	group_code ,
+				detail_code ,
+				detail_name,
+				use_yn
+		FROM tb_detail_code
+		WHERE group_code = #{group_code}
+	</select>
+	
+		<select id="codeCnt" resultType="int">
+	/* kr.happyjob.study.management.dao.ManagementDao.codeCnt */
+		SELECT 
+			count(*) 
+		FROM tb_group_code
+	</select>
+	
+	<select id="test222" resultType="kr.happyjob.study.management.model.ManagementModel">
+	/* kr.happyjob.study.management.dao.ManagementDao.userList */
+		SELECT 
+			noti_seq ,
+			loginID ,
+			noti_title ,
+			noti_content ,
+			noti_date
+		FROM tb_noti_info
+		<where>
+			<if test="(searchTitle != null) and (!''.equals(searchTitle))">
+				and noti_title Like CONCAT('%', #{searchTitle}, '%')
+			</if>
+			<if test="(searchStDate != null) and (!''.equals(searchStDate))">
+				and noti_date <![CDATA[ >= ]]> STR_TO_DATE(#{searchStDate}, '%Y-%m-%d')
+			</if>
+			<if test="(searchEdDate != null) and (!''.equals(searchEdDate))">
+				and noti_date <![CDATA[ <= ]]> STR_TO_DATE(#{searchEdDate}, '%Y-%m-%d')
+			</if>
+		</where>
+		ORDER BY noti_seq DESC
+		LIMIT #{startSeq}, #{pageSize}
+	</select>
+	
+	
+	
+	<select id="userListCnt" resultType="int">
+	/* kr.happyjob.study.management.dao.ManagementDao.userListCnt */
+		SELECT 
+			count(*) 
+		FROM tb_userinfo
+	</select>
+	
+	<select id="userListCnt2" resultType="int">
+	/* kr.happyjob.study.management.dao.ManagementDao.userListCnt2 */
+		SELECT 
+			count(*) 
+		FROM (
+    		SELECT loginID AS loginID , name AS name, hp AS phone  FROM tb_userinfo
+    		UNION ALL
+    		SELECT cust_id AS loginID , cust_name AS name, cust_person_ph AS phone FROM tb_cust_info
+		) AS name_union
+		LEFT JOIN tb_userinfo ON name_union.loginID = tb_userinfo.loginID
+		LEFT JOIN tb_cust_info ON name_union.loginID = tb_cust_info.cust_id
+		<where>
+			<if test="(searchCustName != null) and (!''.equals(searchCustName))">
+				and name_union.name Like CONCAT('%', #{searchCustName}, '%')
+			</if>
+			<if test="(searchCustPerson != null) and (!''.equals(searchCustPerson))">
+				and tb_cust_info.cust_person Like CONCAT('%', #{searchCustPerson}, '%')
+			</if>
+			<if test="(searchUserName != null) and (!''.equals(searchUserName))">
+				and name_union.name Like CONCAT('%', #{searchUserName}, '%')
+			</if>
+			<if test="(searchJob != null) and (!''.equals(searchJob))">
+				and tb_userinfo.user_type Like CONCAT('%', #{searchJob}, '%')
+			</if>
+		</where>
+	</select>
+	
+	<select id="supplyListCnt" resultType="int">
+	/* kr.happyjob.study.management.dao.ManagementDao.supplyListCnt */
+		SELECT 
+			count(*) 
+		FROM tb_cust_info
+	</select>
+	
+		<insert id="regist">
+	/* kr.happyjob.study.management.dao.ManagementDao.regist */
+		insert into tb_userinfo
+			( 
+				loginID,
+				user_type,
+				name,
+				password,
+				hp,
+				email,
+				zip_code,
+				addr,
+				addr_detail
+			) values (
+				#{loginID},
+				#{job_code},
+				#{name},
+				#{password},
+				#{hp},
+				#{email},
+				#{zip_code},
+				#{addr},
+				#{addr_detail}
+			)
+	</insert>
+	
+	<update id="userAjust">
+	/* kr.happyjob.study.management.dao.ManagementDao.userAjust */
+		update tb_userinfo
+		   set 
+				user_type = #{job_code} ,
+				name = #{name} ,
+				password = #{password} ,
+				hp = #{hp} ,
+				email = #{email} ,
+				zip_code = #{zip_code} ,
+				addr = #{addr} ,
+				addr_detail = #{addr_detail} ,
+				job_code = #{job_code}
+			WHERE loginID = #{loginID}
+	</update>
+	
+		<delete id="userDelete">
+	/* kr.happyjob.study.management.dao.ManagementDao.userDelete */
+		DELETE FROM tb_userinfo
+		WHERE loginID = #{loginID}
+	</delete>
+	
+	<select id="warehouseList" resultType="map">
+	    SELECT 
+	        storage_code, storage_name, CONCAT(storage_loc, ' ', storage_detail_loc) as storage_loc, storage_manager
+	    FROM 
+	        tb_storage
+	    <where>
+	        <if test="searchTitle != null and !''.equals(searchTitle) and searchSelect == 'name'">
+	            AND storage_name LIKE CONCAT('%', #{searchTitle}, '%')
+	        </if>
+	        <if test="searchTitle != null and !''.equals(searchTitle) and searchSelect == 'address'">
+	            AND (storage_loc LIKE CONCAT('%', #{searchTitle}, '%') OR storage_detail_loc LIKE CONCAT('%', #{searchTitle}, '%'))
+	        </if>
+	    </where>
+	    ORDER BY storage_code 
+	</select>
+	
+	<insert id="newStorageSave" parameterType="map">
+		<selectKey resultType="int" keyProperty="storage_code" order="BEFORE">
+			SELECT IFNULL(max(storage_code), 0)+1 from tb_storage
+		</selectKey>	
+		INSERT INTO 
+			tb_storage
+			(
+			storage_code,
+			storage_name,
+			storage_loc,
+			storage_detail_loc,
+			storage_loc_num,
+			storage_manager
+			)
+		VALUES
+			(
+			#{storage_code},
+			#{storage_name},
+			#{storage_loc},
+			#{storage_detail_loc},
+			#{storage_loc_num},
+			#{storage_manager}
+			)
+	
+	</insert>
+	
+	<select id="warehouseDetail" resultType="map">
+	
+		SELECT 
+			st.storage_name,IFNULL(it.item_name, '-') as item_name, IFNULL(it.item_price, '-') as item_price, 
+			IFNULL(ti.inventory_count, '-') as inventory_count, IFNULL(ti.item_code,'-') as item_code 
+		from
+			tb_storage st 
+		left outer join 
+			tb_inventory ti 
+		on
+			st.storage_code = ti.storage_code
+		left outer join 
+			tb_item_info it	
+		on
+			it.item_code = ti.item_code 
+		WHERE 
+			st.storage_code = #{storage_code}
+
+	</select>
+
+	<select id="orderCompanyList" resultType="map">
+	
+		SELECT 
+			company_seq, company_name 
+		from 
+			tb_order_company 
+	
+	</select>
+	
+	<insert id="newCompanySave">
+	
+		<selectKey resultType="int" keyProperty="company_seq" order="BEFORE">
+			SELECT max(company_seq) + 1 from tb_order_company
+		</selectKey>
+		INSERT INTO tb_order_company
+		VALUES (#{company_seq} , #{company_name});
+
+	
+	</insert>	
+
+	<update id="comCodeAdjust">
+	/* kr.happyjob.study.management.dao.ManagementDao.comCodeAdjust */
+		UPDATE tb_group_code, tb_detail_code
+		   <set>
+		   <if test="group_code != null and !''.equals(group_code)">
+	            tb_group_code.group_code = #{group_code},
+	        </if> 
+		   <if test="group_name != null and !''.equals(group_name) ">
+	            tb_group_code.group_name = #{group_name},
+	        </if>
+	        <if test="use_yn != null and !''.equals(use_yn)">
+				tb_group_code.use_yn = #{use_yn},
+	        </if>
+	        tb_detail_code.use_yn = #{use_yn}
+	        </set>
+		WHERE tb_detail_code.group_code = #{group_id} AND tb_group_code.group_code = #{group_id}
+	</update>
+	
+	<update id="comDetailCodeAdjust">
+	/* kr.happyjob.study.management.dao.ManagementDao.comDetailCodeAdjust */
+		update tb_detail_code
+		   <set>
+		   <if test="detail_code != null and !''.equals(detail_code)">
+	            detail_code = #{detail_code},
+	        </if> 
+		   <if test="detail_name != null and !''.equals(detail_name) ">
+	            detail_name = #{detail_name},
+	        </if>
+	        <if test="use_yn != null and !''.equals(use_yn)">
+				use_yn = #{use_yn}
+	        </if>
+	        </set>
+			WHERE detail_code = #{detail_id}
+	</update>
+	
+	<insert id="comCodeRegist">
+	/* kr.happyjob.study.management.dao.ManagementDao.comCodeRegist */
+		insert into tb_group_code
+			( 
+				group_code,
+				group_name,
+				use_yn,
+				reg_date,
+				update_date,
+				reg_id,
+				update_id
+			) values (
+				#{group_code},
+				#{group_name},
+				#{use_yn},
+				NOW(),
+				NOW(),
+				#{loginId},
+				#{loginId}
+			)
+	</insert>
+	
+	<insert id="comDetailCodeRegist">
+	/* kr.happyjob.study.management.dao.ManagementDao.comDetailCodeRegist */
+		insert into tb_detail_code
+			( 
+				detail_code, 
+				group_code, 
+				detail_name, 
+				use_yn, 
+				reg_id, 
+				reg_date,
+				update_id, 
+				update_date
+			) values (
+				#{detail_code},
+				#{group_code},
+				#{detail_name},
+				#{use_yn},
+				#{loginId},
+				NOW(),
+				#{loginId},
+				NOW()
+			)
+	</insert>
+	
+	<delete id="comDetailCodeDelete">
+	/* kr.happyjob.study.management.dao.ManagementDao.comDetailCodeDelete */
+		DELETE FROM tb_detail_code
+		WHERE detail_code = #{detail_code}
+	</delete>
+	
+	<delete id="comCodeDelete">
+	/* kr.happyjob.study.management.dao.ManagementDao.comCodeDelete */
+		DELETE FROM tb_group_code
+		WHERE group_code = #{group_code}
+	</delete>
+	
+	<select id="comnCodeSearch" resultType="kr.happyjob.study.management.model.ManagementModel">
+	/* kr.happyjob.study.management.dao.ManagementDao.comnCodeSearch */
+		SELECT	tb_group_code.group_code ,    
+				tb_group_code.group_name ,
+				tb_group_code.use_yn ,
+				tb_group_code.reg_date
+		FROM tb_group_code
+		<where>
+		<if test="searchGroupCode != null and !''.equals(searchGroupCode)">
+            AND (group_code LIKE CONCAT('%', #{searchGroupCode}, '%'))
+		</if>
+		</where>
+	</select>
+	
+	
+	
+	<select id="comnCodeSearch2" resultType="kr.happyjob.study.management.model.ManagementModel">
+	/* kr.happyjob.study.management.dao.ManagementDao.comnCodeSearch2 */
+		SELECT	tb_group_code.group_code ,    
+				tb_group_code.group_name ,
+				tb_group_code.use_yn ,
+				tb_group_code.reg_date
+		FROM tb_group_code
+		JOIN tb_detail_code ON tb_detail_code.group_code = tb_group_code.group_code
+		<where>
+		<if test="searchDetailCode != null and !''.equals(searchDetailCode)">
+            AND (detail_code LIKE CONCAT('%', #{searchDetailCode}, '%'))
+		</if>
+		</where>
+	</select>
+	
+	<select id="comnCodeSearch3" resultType="kr.happyjob.study.management.model.ManagementModel">
+	/* kr.happyjob.study.management.dao.ManagementDao.comnCodeSearch3 */
+		SELECT	tb_group_code.group_code ,    
+				tb_group_code.group_name ,
+				tb_group_code.use_yn ,
+				tb_group_code.reg_date
+		FROM tb_group_code
+		JOIN tb_detail_code ON tb_detail_code.group_code = tb_group_code.group_code
+		<where>
+		<if test="searchDetailName != null and !''.equals(searchDetailName)">
+            AND (detail_name LIKE CONCAT('%', #{searchDetailName}, '%'))
+		</if>
+		</where>
+	</select>
+	
+	
+
+	<select id="orderComponyDetail" resultType="map">
+	
+		SELECT oc.company_seq, oc.company_name, ci.item_code, it.item_name 
+		from tb_company_item ci
+		left join tb_order_company oc
+		ON ci.company_seq = oc.company_seq 
+		left join tb_item_info it
+		on it.item_code = ci.item_code 
+		WHERE ci.company_seq =  #{company_seq}
+	
+	</select>
+	
+	<select id="orderComSelectItem" resultType="map">
+	
+		SELECT 
+			item_code, item_name
+		FROM 
+			tb_item_info
+		WHERE 
+			(item_code, item_name) NOT IN 
+				(
+			    SELECT ci.item_code, it.item_name
+			    FROM tb_company_item ci
+			    LEFT JOIN tb_order_company oc ON ci.company_seq = oc.company_seq
+			    LEFT JOIN tb_item_info it ON it.item_code = ci.item_code
+			    WHERE ci.company_seq = #{company_seq}
+				)
+	
+	</select>
+	
+	<insert id="newItemSave">
+	
+	 	INSERT INTO tb_company_item (company_seq, item_code)
+		VALUES (#{company_seq}, #{item_code})
+		
+	</insert>
+	
+	<select id="getProductList" resultType="kr.happyjob.study.management.model.ManagementModel">
+	/* kr.happyjob.study.management.dao.ManagementDao.getProductList */
+		SELECT	item_name, 
+				item_code, 
+				manufac, 
+				provide_value,
+				product_detail,
+				img_path
+		FROM tb_item_info
+		LIMIT #{startSeq}, #{pageSize}
+	</select>
+	
+		<select id="productCnt" resultType="int">
+	/* kr.happyjob.study.management.dao.ManagementDao.productCnt */
+		SELECT 
+			count(*) 
+		FROM tb_item_info
+	</select>
+	
+	<select id="productSearch" resultType="kr.happyjob.study.management.model.ManagementModel">
+	/* kr.happyjob.study.management.dao.ManagementDao.productSearch */
+		SELECT	item_name, 
+				item_code, 
+				manufac, 
+				provide_value
+		FROM tb_item_info
+		<where>
+		<if test="searchItemName != null and !''.equals(searchItemName)">
+            AND (item_name LIKE CONCAT('%', #{searchItemName}, '%'))
+		</if>
+		<if test="searchItemCode != null and !''.equals(searchItemCode)">
+            AND (item_code LIKE CONCAT('%', #{searchItemCode}, '%'))
+		</if>
+		<if test="searchManufac != null and !''.equals(searchManufac)">
+            AND (manufac LIKE CONCAT('%', #{searchManufac}, '%'))
+		</if>
+		</where>
+		LIMIT #{startSeq}, #{pageSize}
+	</select>
+	
+	<select id="getDetailProductList" resultType="kr.happyjob.study.management.model.ManagementModel">
+	/* kr.happyjob.study.management.dao.ManagementDao.getDetailProductList */
+		SELECT	item_name, 
+				item_code, 
+				manufac, 
+				provide_value,
+				product_detail,
+				img_path
+		FROM tb_item_info
+		WHERE item_code = #{item_code}
+	</select>
+	
+	<insert id="productRegist">
+	/* kr.happyjob.study.management.dao.ManagementDao.productRegist */
+		insert into tb_item_info
+			( 
+				item_code,
+				item_name,
+				manufac,
+				provide_value,
+				product_detail
+			) values (
+				#{product_code },
+				#{product_name },
+				#{manufac },
+				#{product_value },
+				#{product_detail }
+			)
+	</insert>
+	
+	<update id="productUpdate">
+	/* kr.happyjob.study.management.dao.ManagementDao.productUpdate */
+		update tb_item_info
+		<set>
+		  <if test="product_code != null and !''.equals(product_code)">
+	            item_code = #{product_code},
+	      </if>
+	      <if test="product_name != null and !''.equals(product_name)">
+	            item_name = #{product_name},
+	      </if>
+	      <if test="manufac != null and !''.equals(manufac)">
+	            manufac = #{manufac},
+	      </if>
+	      <if test="product_value != null and !''.equals(product_value)">
+	            provide_value = #{product_value},
+	      </if>
+	      <if test="product_detail != null and !''.equals(product_detail)">
+	            product_detail = #{product_detail}
+	      </if>
+		</set>
+		WHERE item_code = #{item_code}
+	</update>
+
+	
+	<delete id="productDelete">
+	/* kr.happyjob.study.management.dao.ManagementDao.productDelete */
+		DELETE FROM tb_item_info
+		WHERE item_code = #{product_code}
+	</delete>
+
+</mapper>

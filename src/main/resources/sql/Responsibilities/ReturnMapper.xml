@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.happyjob.study.responsibilities.dao.ReturnDAO">
+	<select id="returnList" resultType="kr.happyjob.study.responsibilities.vo.ReturnVO">
+		select 
+		seq,
+		item_code,
+		return_order_date,
+		return_count,
+		signYN
+		from tb_return 
+		<where>
+			<if test="(searchTitle != null) and (!''.equals(searchTitle))">
+				and item_code Like CONCAT('%', #{searchTitle}, '%')
+			</if>
+			<if test="(searchStDate != null) and (!''.equals(searchStDate))">
+				and return_order_date <![CDATA[>=]]> STR_TO_DATE(#{searchStDate}, '%Y-%m-%d')
+			</if>
+			<if test="(searchEdDate != null) and (!''.equals(searchEdDate))">
+				and return_order_date <![CDATA[<=]]> STR_TO_DATE(#{searchEdDate}, '%Y-%m-%d')
+			</if>
+			<if test="(type != null) and (!''.equals(type)) and (type == 'ing')" >
+				and signYN = 'N'
+			</if>
+			<if test="(type != null) and (!''.equals(type)) and (type == 'done')" >
+				and signYN = 'Y'
+			</if>
+		</where>
+		LIMIT #{startSeq}, #{pageSize}
+	</select>
+	<select id="returnCnt" resultType="int">
+	SELECT count(*)
+	FROM tb_return
+	<where>
+			<if test="(searchTitle != null) and (!''.equals(searchTitle))">
+				and item_code Like CONCAT('%', #{searchTitle}, '%')
+			</if>
+			<if test="(searchStDate != null) and (!''.equals(searchStDate))">
+				and return_order_date <![CDATA[>=]]> STR_TO_DATE(#{searchStDate}, '%Y-%m-%d')
+			</if>
+			<if test="(searchEdDate != null) and (!''.equals(searchEdDate))">
+				and return_order_date <![CDATA[<=]]> STR_TO_DATE(#{searchEdDate}, '%Y-%m-%d')
+			</if>
+			<if test="(type != null) and (!''.equals(type)) and (type == 'ing')" >
+				and signYN = 'N'
+			</if>
+			<if test="(type != null) and (!''.equals(type)) and (type == 'done')" >
+				and signYN = 'Y'
+			</if>
+		</where>
+	</select>
+	<select id="returnDetail" resultType="kr.happyjob.study.responsibilities.vo.ReturnVO">
+		 SELECT
+            seq,
+            item_code,
+            return_order_date,
+            return_count,
+            signYN,
+            refund_bank,
+            refund_bank_num,
+            refund_bank_name
+        FROM tb_return
+        WHERE seq = #{seq}
+	</select>
+	
+	<update id="confirm" parameterType="map">
+	  UPDATE tb_return
+	  SET signYN = 'Y'
+	  WHERE seq = #{seq}
+	</update>
+
+	<update id="modeItemCount" parameterType="map">
+	  UPDATE tb_inventory
+	  SET inventory_count = inventory_count + #{return_count}
+	  WHERE item_code = #{item_code}
+	</update>
+
+
+</mapper>

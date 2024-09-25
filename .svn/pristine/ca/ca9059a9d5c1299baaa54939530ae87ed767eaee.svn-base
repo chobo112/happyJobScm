@@ -1,0 +1,579 @@
+package kr.happyjob.study.management.service;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
+
+import kr.happyjob.study.board.model.NoticeModel;
+import kr.happyjob.study.common.comnUtils.FileUtilCho;
+import kr.happyjob.study.common.comnUtils.FileUtilMultipartFile;
+import kr.happyjob.study.management.dao.ManagementDao;
+import kr.happyjob.study.management.model.ManagementModel;
+
+@Service
+public class ManagementServiceImpl implements ManagementService {
+
+	@Autowired
+	ManagementDao managementDao;
+	
+	private final Logger logger = LogManager.getLogger(this.getClass());
+
+	@Value("${fileUpload.rootPath}")
+	private String rootPath;
+
+	@Value("${fileUpload.virtualRootPath}")
+	private String virtualRootPath;
+
+	@Value("${fileUpload.noticePath}")
+	private String noticePath;
+
+	@Value("${fileUpload.prducimage}")
+	private String prducimage;
+	
+	@Override
+	public List<ManagementModel> userList(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.userList(paramMap);
+	}
+	
+	@Override
+	public List<ManagementModel> supplyList(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.supplyList(paramMap);
+	}
+	
+	@Override
+	public List<ManagementModel> userDetail(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.userDetail(paramMap);
+	}
+	
+	@Override
+	public ManagementModel custDetail(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.custDetail(paramMap);
+	}
+	
+	@Override
+	public List<ManagementModel> custProduct(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.custProduct(paramMap);
+	}
+
+	@Override
+	public int userListCnt(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.userListCnt(paramMap);
+	}
+	
+	@Override
+	public int userListCnt2(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.userListCnt2(paramMap);
+	}
+	
+	@Override
+	public int supplyListCnt(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.supplyListCnt(paramMap);
+	}
+	
+	@Override
+	public int custProductCnt(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.custProductCnt(paramMap);
+	}
+	
+	@Override
+	public int codeCnt(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.codeCnt(paramMap);
+	}
+	
+	@Override
+	public int regist(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.regist(paramMap);
+	}
+	
+	@Override
+	public int userAjust(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.userAjust(paramMap);
+	}
+	
+	@Override
+	public int userDelete(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.userDelete(paramMap);
+	}
+
+	@Override
+	public List<Map<String, Object>> warehouseList(Map<String, Object> paramMap) {
+		// TODO Auto-generated method stub
+		return managementDao.warehouseList(paramMap);
+	}
+
+	@Override
+	public int newStorageSave(Map<String, Object> paramMap) {
+		// TODO Auto-generated method stub
+		return managementDao.newStorageSave(paramMap);
+	}
+	
+	@Override
+	public List<Map<String, Object>> warehouseDetail(Map<String, Object> paramMap) {
+		// TODO Auto-generated method stub
+		return managementDao.warehouseDetail(paramMap);
+	}
+
+	@Override
+	public List<Map<String, Object>> orderCompanyList(Map<String, Object> paramMap) {
+		// TODO Auto-generated method stub
+		return managementDao.orderCompanyList(paramMap);
+	}
+	@Override
+	public int newCompanySave(Map<String, Object> paramMap) {
+		// TODO Auto-generated method stub
+		return managementDao.newCompanySave(paramMap);
+	}
+
+	@Override
+	public List<ManagementModel> userSearch(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.userSearch(paramMap);
+	}
+	
+	@Override
+	public List<ManagementModel> supplySearch(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.supplySearch(paramMap);
+	}
+	
+	@Override
+	public List<ManagementModel> supplySearch2(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.supplySearch2(paramMap);
+	}
+	
+	@Override
+	public List<ManagementModel> comnCodeSearch(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.comnCodeSearch(paramMap);
+	}
+	
+	@Override
+	public List<ManagementModel> comnCodeSearch2(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.comnCodeSearch2(paramMap);
+	}
+	
+	@Override
+	public List<ManagementModel> comnCodeSearch3(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.comnCodeSearch3(paramMap);
+	}
+
+	@Override
+	public List<ManagementModel> getCodeList(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.getCodeList(paramMap);
+	}
+	
+	@Override
+	public List<ManagementModel> getDetailCodeList(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.getDetailCodeList(paramMap);
+	}
+
+	@Override
+	public List<Map<String, Object>> orderComponyDetail(Map<String, Object> paramMap) {
+		// TODO Auto-generated method stub
+		return managementDao.orderComponyDetail(paramMap);
+	} 
+
+	@Override
+	public int comCodeAdjust(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.comCodeAdjust(paramMap);
+	}
+	
+	@Override
+	public int comDetailCodeAdjust(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.comDetailCodeAdjust(paramMap);
+	}
+	
+	@Override
+	public int comCodeRegist(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.comCodeRegist(paramMap);
+	}
+	
+	@Override
+	public int comDetailCodeRegist(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.comDetailCodeRegist(paramMap);
+	}
+	
+	@Override
+	public int comCodeDelete(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.comCodeDelete(paramMap);
+	}
+	
+	@Override
+	public int comDetailCodeDelete(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.comDetailCodeDelete(paramMap);
+	}
+
+	@Override
+	public List<Map<String, Object>> orderComSelectItem(Map<String, Object> paramMap) {
+		// TODO Auto-generated method stub
+		return managementDao.orderComSelectItem(paramMap);
+	}
+	@Override
+	public int newItemSave(Map<String, Object> paramMap) {
+		return managementDao.newItemSave(paramMap);
+	}
+	
+	@Override
+	public List<ManagementModel> getProductList(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.getProductList(paramMap);
+	}
+	
+	@Override
+	public List<ManagementModel> getDetailProductList(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.getProductList(paramMap);
+	}
+	
+	@Override
+	public int productCnt(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.productCnt(paramMap);
+	}
+	
+	@Override
+	public List<ManagementModel> productSearch(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.productSearch(paramMap);
+	}
+	
+	@Override
+	public int productRegist(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.productRegist(paramMap);
+	}
+	
+	@Override
+	public int productUpdate(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.productUpdate(paramMap);
+	}
+	
+	@Override
+	public int productDelete(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.productDelete(paramMap);
+	}
+
+	@Override
+	public List<ManagementModel> itemList(Map<String, Object> paramMap) throws Exception{
+		// TODO Auto-generated method stub
+		return managementDao.itemList(paramMap);
+	}
+
+	@Override
+	public int custRegister(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.custRegister(paramMap);
+	}
+
+	@Override
+	public int custUpdate(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.custUpdate(paramMap);
+	}
+
+	@Override
+	public int custDelete(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.custDelete(paramMap);
+	}
+
+	@Override
+	public int sameCode(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.sameCode(paramMap);
+	}
+
+	@Override
+	public ManagementModel itemDetail(Map<String, Object> paramMap) {
+		// TODO Auto-generated method stub
+		return managementDao.itemDetail(paramMap);
+	}
+
+	@Override
+	public int newOrderCompany(Map<String, Object> paramMap) {
+		// TODO Auto-generated method stub
+		return managementDao.newOrderCompany(paramMap);
+	}
+
+	@Override
+	public int ItemFileSaveJson(Map<String, Object> paramMap, MultipartFile[] files) throws Exception {
+		// TODO Auto-generated method stub
+		String itemFilePath = prducimage + File.separator;
+		FileUtilMultipartFile fileUpload = new FileUtilMultipartFile(files, rootPath, virtualRootPath, itemFilePath); 
+		Map<String, Object> fileInfo = fileUpload.uploadFiles();
+		if(!fileInfo.isEmpty()){
+			paramMap.put("fileYn", "Y");
+			paramMap.put("fileInfo", fileInfo);			
+		}else{
+			paramMap.put("fileYn", "N");
+			paramMap.put("fileInfo", null);						
+		}
+		int itenInsetCount = managementDao.ItemFileSaveJson(paramMap);
+		
+				if(itenInsetCount > 0 ){
+					return managementDao.newItemSave(paramMap);
+				}
+		
+		
+		throw new RuntimeException("Failed to insert item information");
+	}
+
+	@Override
+	public int noticeFileSaveJson(Map<String, Object> paramMap, HttpServletRequest request) throws Exception {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public List<ManagementModel> itemCodeList(Map<String, Object> paramMap) {
+		// TODO Auto-generated method stub
+		return managementDao.itemCodeList(paramMap);
+	}
+
+	@Override
+	public int itemCodeTotalCnt(Map<String, Object> paramMap)throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.itemCodeTotalCnt(paramMap);
+	}
+
+	@Override
+	public int itemUpdateJson(Map<String, Object> paramMap, MultipartFile[] files) throws Exception {
+		
+		ManagementModel orginFile = managementDao.itemDetail(paramMap);//itemDetail 확인
+        if (orginFile.getMajor_class() != null) {//파일이름 컬럼명 확인 
+            File oldFile = new File(orginFile.getItem_note());//파일의 phsycal_path 확인
+            oldFile.delete();
+        }
+        
+        String itemFilePath = prducimage + File.separator;
+		FileUtilMultipartFile fileUpload = new FileUtilMultipartFile(files, rootPath, virtualRootPath, itemFilePath); 
+		Map<String, Object> fileInfo = fileUpload.uploadFiles();
+		if(!fileInfo.isEmpty()){
+			paramMap.put("fileYn", "Y");
+			paramMap.put("fileInfo", fileInfo);			
+		}else{
+			paramMap.put("fileYn", "N");
+			paramMap.put("fileInfo", null);						
+		}
+	
+		return managementDao.itemUpdateJson(paramMap);
+	}
+
+	@Override
+	public int warehouseCount(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.warehouseCount(paramMap);
+	}
+
+
+
+	@Override
+	public List<ManagementModel> warehouseList1(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.warehouseList1(paramMap);
+	}
+
+	@Override
+	public List<ManagementModel> custDetail1(Map<String, Object> paramMap) {
+		// TODO Auto-generated method stub
+		return managementDao.custDetail1(paramMap);
+	}
+
+	@Override
+	public ManagementModel warehouseDetail1(Map<String, Object> paramMap)  {
+		// TODO Auto-generated method stub
+		return managementDao.warehouseDetail1(paramMap);
+	}
+
+	@Override
+	public int newStorageUpdate1(Map<String, Object> paramMap) {
+		// TODO Auto-generated method stub
+		return managementDao.newStorageUpdate1(paramMap);
+	}
+
+	@Override
+	public List<Map<String, Object>> warehouseDetail2(Map<String, Object> paramMap) {
+		// TODO Auto-generated method stub
+		return managementDao.warehouseDetail2(paramMap);
+	}
+
+	@Override
+	public ManagementModel warehouseDetail3(Map<String, Object> paramMap) {
+		// TODO Auto-generated method stub
+		return managementDao.warehouseDetail3(paramMap);
+	}
+
+	@Override
+	public List<ManagementModel> warehouseList0(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return managementDao.warehouseList0(paramMap);
+	}
+
+	@Override
+	public int saveItemStorage(Map<String, Object> paramMap) {
+		// TODO Auto-generated method stub
+		return  managementDao.saveItemStorage(paramMap);
+	}
+
+	@Override
+	public int addItem(Map<String, Object> paramMap) throws Exception{
+		// TODO Auto-generated method stub
+		return  managementDao.addItem(paramMap);
+	}
+
+	@Override
+	public int sameCode1(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		int sameCode1 = managementDao.sameCode1(paramMap);
+		
+		if (sameCode1 > 0) {
+			return managementDao.addItem(paramMap);
+		} else {
+			return managementDao.saveItemStorage(paramMap);
+		}
+	}
+
+
+	
+
+//	@Override
+//	public int getCodeList(Map<String, Object> paramMap) throws Exception {
+//		// TODO Auto-generated method stub
+//		return managementDao.getCodeList(paramMap);
+//	}
+	
+	
+
+/*	@Override
+	public List<NoticeModel> noticeList(Map<String, Object> paramMap) throws Exception {
+
+		return noticeDao.noticeList(paramMap);
+	}
+	
+	@Override
+	public List<NoticeModel> userList2(Map<String, Object> paramMap) throws Exception {
+
+		return noticeDao.userList(paramMap);
+	}
+
+	
+
+	@Override
+	public int noticeSave(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return noticeDao.noticeSave(paramMap);
+	}
+
+	@Override
+	public NoticeModel noticeDetail(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return noticeDao.noticeDetail(paramMap);
+	}
+
+	@Override
+	public int noticeUpdate(Map<String, Object> paramMap) throws Exception {
+		// TODO Auto-generated method stub
+		return noticeDao.noticeUpdate(paramMap);
+	}
+
+	@Override
+	public int noticeDelete(Map<String, Object> paramMap) throws Exception {
+		// 1. 업로드 되었던 파일을 삭제
+		NoticeModel orginFile = noticeDao.noticeDetail(paramMap);
+		if (orginFile.getFile_name() != null) {
+			File oldFile = new File(orginFile.getPhsycal_path());
+			oldFile.delete();
+		}
+		return noticeDao.noticeDelete(paramMap);
+	}
+
+	@Override
+	public int noticeSaveFile(Map<String, Object> paramMap, HttpServletRequest request) throws Exception {
+
+		// 업로드 된 파일을 db에 저장
+		MultipartHttpServletRequest multipartHttpServletRequest = (MultipartHttpServletRequest) request;
+
+		String itemFilePath = noticePath + File.separator;
+		FileUtilCho fileUpload = new FileUtilCho(multipartHttpServletRequest, rootPath, virtualRootPath, itemFilePath);
+
+		Map<String, Object> fileInfo = fileUpload.uploadFiles();
+
+		if (fileInfo.get("file_nm") == null) {
+			paramMap.put("fileYn", "N");
+			paramMap.put("fileinfo", null);
+		} else {
+			paramMap.put("fileYn", "Y");
+			paramMap.put("fileinfo", fileInfo);
+		}
+
+		return noticeDao.noticeSaveFile(paramMap);
+	}
+
+	@Override
+	public int noticeUpdateFile(Map<String, Object> paramMap, HttpServletRequest request) throws Exception {
+
+		// 1. 업로드 되었던 파일을 삭제
+		NoticeModel orginFile = noticeDao.noticeDetail(paramMap);
+		if (orginFile.getFile_name() != null) {
+			File oldFile = new File(orginFile.getPhsycal_path());
+			oldFile.delete();
+		}
+
+		// 2. 수정 된 파일을 폴더에 저장
+		MultipartHttpServletRequest multipartHttpServletRequest = (MultipartHttpServletRequest) request;
+
+		String itemFilePath = noticePath + File.separator;
+		FileUtilCho fileUpload = new FileUtilCho(multipartHttpServletRequest, rootPath, virtualRootPath, itemFilePath);
+
+		Map<String, Object> fileInfo = fileUpload.uploadFiles();
+
+		if (fileInfo.get("file_nm") == null) {
+			paramMap.put("fileYn", "N");
+			paramMap.put("fileinfo", null);
+		} else {
+			paramMap.put("fileYn", "Y");
+			paramMap.put("fileinfo", fileInfo);
+		}
+
+		return noticeDao.noticeUpdateFile(paramMap);
+	}
+	*/
+
+}

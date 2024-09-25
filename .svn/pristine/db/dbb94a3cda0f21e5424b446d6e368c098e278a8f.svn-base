@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.happyjob.study.practice.dao.OrderDAO">
+
+	<select id="orderList" resultType="kr.happyjob.study.practice.vo.OrderVO">
+		select seq, product_name, order_count, order_date
+		from tb_order
+	</select>
+</mapper>

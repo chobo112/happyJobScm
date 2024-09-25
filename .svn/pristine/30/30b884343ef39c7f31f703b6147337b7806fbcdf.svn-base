@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.board.dao.NoticeDao">
+	
+	<select id="noticeList" resultType="kr.happyjob.study.board.model.NoticeModel">
+	/* kr.happyjob.study.board.dao.NoticeDao.noticeList */
+		SELECT 
+			noti_seq ,
+			loginID ,
+			noti_title ,
+			noti_content ,
+			noti_date
+		FROM tb_noti_info
+		<where>
+			<if test="(searchTitle != null) and (!''.equals(searchTitle))">
+				and noti_title LIKE CONCAT('%', #{searchTitle}, '%')
+			</if>
+			<if test="(searchStDate != null) and (!''.equals(searchStDate))">
+				and noti_date <![CDATA[ >= ]]> STR_TO_DATE(#{searchStDate}, '%Y-%m-%d')
+			</if>
+			<if test="(searchEdDate != null) and (!''.equals(searchEdDate))">
+				and noti_date <![CDATA[ <= ]]> STR_TO_DATE(#{searchEdDate}, '%Y-%m-%d')
+			</if>
+		</where>
+		ORDER BY noti_seq DESC
+		LIMIT #{startSeq}, #{pageSize}
+	</select>
+	
+	<select id="noticeListCnt" resultType="int">
+	/* kr.happyjob.study.board.dao.NoticeDao.noticeListCnt */
+		SELECT COUNT(*) 
+		FROM tb_noti_info
+		<where>
+			<if test="(searchTitle != null) and (!''.equals(searchTitle))">
+				and noti_title LIKE CONCAT('%', #{searchTitle}, '%')
+			</if>
+			<if test="(searchStDate != null) and (!''.equals(searchStDate))">
+				and noti_date <![CDATA[ >= ]]> STR_TO_DATE(#{searchStDate}, '%Y-%m-%d')
+			</if>
+			<if test="(searchEdDate != null) and (!''.equals(searchEdDate))">
+				and noti_date <![CDATA[ <= ]]> STR_TO_DATE(#{searchEdDate}, '%Y-%m-%d')
+			</if>
+		</where>
+	</select>
+	
+	<insert id="noticeSave">
+	/* kr.happyjob.study.system.dao.NoticeDao.noticeSave */
+		<selectKey resultType="int" keyProperty="noticeSeq" order="BEFORE">
+			SELECT IFNULL(max(noti_seq), 0) + 1 from tb_noti_info
+		</selectKey>
+		insert into tb_noti_info
+			(
+				noti_seq, 
+				loginID,
+				noti_title,
+				noti_content,
+				noti_date
+			) values (
+				#{noticeSeq},
+				#{loginId},
+				#{title},
+				#{content},
+				now()
+			)
+	</insert>
+	
+	<update id="noticeUpdate">
+	/* kr.happyjob.study.system.dao.NoticeDao.noticeSave */
+		update tb_noti_info
+		   set 
+		       noti_title = #{title} ,
+		       noti_content = #{content} 
+		 where noti_seq = #{noticeSeq}
+	
+	
+	</update>
+	
+	<select id="noticeDetail" resultType="kr.happyjob.study.board.model.NoticeModel">
+	/* kr.happyjob.study.system.dao.NoticeDao.noticeDetail */
+		SELECT 
+			noti_seq ,
+			loginID ,
+			noti_title ,
+			noti_content ,
+			file_name ,
+			phsycal_path ,
+			logical_path ,
+			file_size ,
+			file_ext
+		FROM tb_noti_info
+		WHERE noti_seq = #{noticeSeq}
+	</select>
+	
+	<delete id="noticeDelete">
+		delete from tb_noti_info
+		where noti_seq = #{noticeSeq}
+	</delete>
+	
+	<!-- 파일 관련 mapper -->
+	<insert id="noticeSaveFile">
+	/* kr.happyjob.study.system.dao.NoticeDao.noticeDetail */
+	<selectKey resultType="int" keyProperty="noticeSeq" order="BEFORE">
+		SELECT IFNULL(max(noti_seq), 0) + 1 from tb_noti_info
+	</selectKey>
+	INSERT INTO tb_noti_info
+		(
+			noti_seq		, 
+			loginID			,
+			noti_title		,
+			noti_content	,
+			noti_date		,
+			<if test="'Y'.toString() eq fileYn">
+			file_name		,
+			phsycal_path	,
+			logical_path	,
+			file_size		,
+			file_ext
+			</if>
+		)  
+	VALUES 
+		(
+			#{noticeSeq}	,
+			#{loginId}		,
+			#{fileTitle}	,
+			#{fileContent},
+			now()			,
+			<if test="'Y'.toString() eq fileYn">
+			#{fileinfo.file_nm},
+			#{fileinfo.file_loc}	,
+			#{fileinfo.vrfile_loc}	,
+			#{fileinfo.file_size}	,
+			#{fileinfo.fileExtension}				
+			</if>
+		)
+	</insert>
+	
+	<update id="noticeUpdateFile">
+	/* kr.happyjob.study.system.dao.NoticeDao.noticeSave */
+		update tb_noti_info
+		   set 
+		        noti_title = #{fileTitle} 						,
+		        noti_content = #{fileContent} 					,
+		       <if test="'Y'.toString() eq fileYn">
+		        file_name = #{fileinfo.file_nm}				,
+				phsycal_path = #{fileinfo.file_loc}			,
+				logical_path = #{fileinfo.vrfile_loc}		,
+				file_size = #{fileinfo.file_size}			,
+				file_ext = #{fileinfo.fileExtension}
+		       </if>
+		 where noti_seq = #{noticeSeq}
+	</update>
+	<select id="MainNoticeList"  resultType="kr.happyjob.study.board.model.NoticeModel">
+		SELECT 
+		    noti_seq,
+		    loginID,
+		    noti_title,
+		    noti_content,
+		    noti_date
+		FROM 
+		    tb_noti_info
+		ORDER BY 
+		    noti_date DESC
+		LIMIT 5;
+		
+	</select>
+	
+	<insert id="noticeSaveFileJson">
+	    /* kr.happyjob.study.system.dao.NoticeDao.noticeSaveFileJson */
+	    <selectKey resultType="int" keyProperty="noticeSeq" order="BEFORE">
+	        SELECT IFNULL(max(noti_seq), 0) + 1 from tb_noti_info
+	    </selectKey>
+		    INSERT INTO tb_noti_info
+		        (
+	            noti_seq        , 
+	            loginID            ,
+	            noti_title        ,
+	            noti_content    ,
+	            noti_date
+	            <if test="'Y'.toString() eq fileYn">
+	            ,
+	            file_name        ,
+	            phsycal_path    ,
+	            logical_path    ,
+	            file_size        ,
+	            file_ext
+	            </if>
+			    )
+			    VALUES 
+			    (
+	            #{noticeSeq}    ,
+	            #{loginId}        ,
+	            #{title}    ,
+	            #{content},
+	            now()
+	            <if test="'Y'.toString() eq fileYn">
+	            ,
+	            #{fileInfo.file_nm},
+	            #{fileInfo.file_loc}    ,
+	            #{fileInfo.vrfile_loc}    ,
+	            #{fileInfo.file_size}    ,
+	            #{fileInfo.fileExtension}
+	            </if>
+	        )
+    </insert>
+    
+    <update id="noticeUpdateJson">
+    /* kr.happyjob.study.system.dao.NoticeDao.noticeFileUpdateJson */
+        update tb_noti_info
+           set 
+                noti_title = #{title}                         ,
+                noti_content = #{content}
+               <if test="'Y'.toString() eq fileYn">
+               ,
+                file_name = #{fileInfo.file_nm}                ,
+                phsycal_path = #{fileInfo.file_loc}            ,
+                logical_path = #{fileInfo.vrfile_loc}        ,
+                file_size = #{fileInfo.file_size}            ,
+                file_ext = #{fileInfo.fileExtension}
+               </if>
+         where noti_seq = #{noticeSeq}
+    </update>
+		
+</mapper>

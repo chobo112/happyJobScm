@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.mypage.dao.MypageDao">
+	<select id="cartList" resultType="productModel">
+		SELECT 
+			tii.item_code	  ,
+			tii.item_name	  ,
+			tii.major_class	  ,
+			tii.sub_class	  ,
+			tii.manufac		  ,
+			tii.item_stand	  ,
+			tii.item_price	  ,
+			tii.item_surtax	  ,
+			tii.item_note	  ,
+			tii.provide_value ,
+			tii.equipment_type,
+			tii.img_path	  ,
+			tii.product_detail,
+			tc.obtain_count as count
+		FROM tb_item_info tii , tb_cart tc 
+		WHERE tii.item_code = tc.item_code 
+		AND tc.loginID LIKE (#{loginID})
+	</select>
+	
+	<select id="cartListCnt" resultType="int">
+		SELECT count(*)
+		FROM tb_item_info tii , tb_cart tc 
+		WHERE tii.item_code = tc.item_code 
+		AND tc.loginID LIKE (#{loginID})
+	</select>
+	
+	<select id="cartListOne" resultType="productModel">
+		SELECT 
+			tii.item_code	  ,
+			tii.item_name	  ,
+			tii.major_class	  ,
+			tii.sub_class	  ,
+			tii.manufac		  ,
+			tii.item_stand	  ,
+			tii.item_price	  ,
+			tii.item_surtax	  ,
+			tii.item_note	  ,
+			tii.provide_value ,
+			tii.equipment_type,
+			tii.img_path	  ,
+			tii.product_detail,
+			tc.obtain_count as count
+		FROM tb_item_info tii , tb_cart tc 
+		WHERE tii.item_code = #{item_code}
+		AND tc.loginID LIKE (#{loginID})
+		GROUP BY item_code 
+	</select>
+	
+	<select id="cartInfo" resultType="cartModel">
+		SELECT 
+			tc.loginID,
+			tc.item_code,
+			tc.obtain_count,
+			tu.cust_id
+		FROM tb_cart tc, tb_userinfo tu 
+		WHERE tc.loginID = #{loginID}
+		AND tc.item_code = #{item_code}
+		AND tu.loginID = #{loginID}
+	</select>
+	
+	<select id="orderHistory" resultType="orderModel">
+		SELECT  
+			tbo.seq ,
+			tbo.item_code ,
+			tbo.obtain_date ,
+			tbo.obtain_count ,
+			tbo.returnYN ,
+			tbo.depositYN ,
+			tbo.delivery_date ,
+			tbo.cust_id,
+			tii.item_name,
+			tii.item_price
+		FROM tb_obtain tbo, tb_item_info tii
+		WHERE tbo.cust_id IN (
+			SELECT cust_id 
+			FROM tb_userinfo
+			WHERE loginID = #{loginID}
+		)
+		AND tbo.item_code = tii.item_code 
+		<if test="(!''.equals(startDate)) and (!''.equals(endDate))">
+		 	AND tbo.obtain_date BETWEEN CONCAT(#{startDate}, ' 00:00:00:000') AND CONCAT(#{endDate}, ' 23:59:59:999')
+		 </if>
+		ORDER BY obtain_date DESC
+		LIMIT #{startSeq}, #{pageSize}
+	</select>
+	
+	<select id="orderHistoryCnt" resultType="int">
+		SELECT  
+			count(*)
+		FROM tb_obtain tbo, tb_item_info tii
+		WHERE tbo.cust_id IN (
+			SELECT cust_id 
+			FROM tb_userinfo
+			WHERE loginID = #{loginID}
+		)
+		AND tbo.item_code = tii.item_code 
+		<if test="(!''.equals(startDate)) and (!''.equals(endDate))">
+		 	AND tbo.obtain_date BETWEEN CONCAT(#{startDate}, ' 00:00:00:000') AND CONCAT(#{endDate}, ' 23:59:59:999')
+		 </if>
+		ORDER BY obtain_date DESC
+	</select>
+	
+	<select id="returnInfo" resultType="productModel">
+		SELECT
+			to2.obtain_count AS count,
+			tii.item_name,
+			tii.item_price,
+			tii.manufac
+		FROM tb_obtain to2, tb_item_info tii 
+		where to2.seq = #{seq}
+		and to2.item_code = tii.item_code
+	</select>
+
+	<select id="selectReturn" resultType="returnModel">
+		SELECT
+			td.storage_code,
+			to2.item_code,
+			to2.obtain_count AS return_count,
+			to2.cust_id
+		FROM tb_obtain to2, tb_delivery td 
+		WHERE to2.seq = #{seq}
+		AND td.seq = #{seq}
+	</select>
+
+	<select id="returnHistory" resultType="returnModel">
+		SELECT 
+			tr.seq,
+			tr.storage_code,
+			tr.item_code,
+			tr.return_order_date,
+			tr.return_processing_date,
+			tr.return_count,
+			tr.signYN,
+			tr.refund_bank,
+			tr.refund_bank_num,
+			tr.refund_bank_name,
+			tr.cust_id,
+			tii.item_name, 
+			tii.item_price,
+			to2.obtain_date
+		FROM tb_return tr, tb_item_info tii, tb_obtain to2
+		WHERE tr.cust_id IN (
+			SELECT cust_id
+			FROM tb_userinfo
+			WHERE loginID = #{loginID}
+		)
+		AND tr.item_code = tii.item_code 
+		AND tr.seq = to2.seq 
+		<if test="(!''.equals(startDate)) and (!''.equals(endDate))">
+		 	AND tr.return_order_date BETWEEN CONCAT(#{startDate}, ' 00:00:00:000') AND CONCAT(#{endDate}, ' 23:59:59:999')
+		 </if>
+		LIMIT #{startSeq}, #{pageSize}
+	</select>
+	
+	<select id="returnHistoryCnt" resultType="int">
+		SELECT count(*)
+		FROM tb_return tr, tb_item_info tii, tb_obtain to2
+		WHERE tr.cust_id IN (
+			SELECT cust_id
+			FROM tb_userinfo
+			WHERE loginID = #{loginID}
+		)
+		AND tr.item_code = tii.item_code 
+		AND tr.seq = to2.seq 
+		<if test="(!''.equals(startDate)) and (!''.equals(endDate))">
+		 	AND tr.return_order_date BETWEEN CONCAT(#{startDate}, ' 00:00:00:000') AND CONCAT(#{endDate}, ' 23:59:59:999')
+		 </if>
+	</select>
+
+	<update id="cartCountChange">
+		UPDATE tb_cart 
+		SET obtain_count = #{obtain_count}
+		WHERE loginID = #{loginID}
+		AND item_code = #{item_code}	
+	</update>
+	
+	<update id="updateOrderReturn">
+		UPDATE tb_obtain 
+		SET returnYN = 'Y'
+		WHERE seq = #{seq}
+	</update>
+	
+	<insert id="productBuy">
+		INSERT INTO tb_obtain (
+			item_code,
+			obtain_date,
+			obtain_count,
+			returnYN,
+			depositYN,
+			cust_id
+		) VALUES 
+		<foreach collection="list" item="item" separator=",">
+		(
+			#{item.item_code},
+			now(),
+			#{item.obtain_count},
+			"N",
+			"Y",
+			#{item.cust_id}
+		)
+		</foreach>
+	</insert>
+	
+	<insert id="insertOrderReturn">
+		INSERT INTO tb_return (
+			seq,
+			storage_code ,
+			item_code ,
+			return_order_date ,
+			return_count ,
+			signYN ,
+			refund_bank ,
+			refund_bank_num ,
+			refund_bank_name ,
+			cust_id 
+		) VALUES (
+			#{seq},
+			#{storage_code},
+			#{item_code},
+			now(),
+			#{return_count},
+			'N',
+			#{refund_bank},
+			#{refund_bank_num},
+			#{refund_bank_name},
+			#{cust_id}
+		)
+	</insert>
+	
+	<delete id="cartDelete">
+		DELETE FROM tb_cart 
+		WHERE loginID = #{loginID}
+		AND item_code = #{item_code}
+	</delete>
+	
+	<delete id="cartListDelete">
+		DELETE FROM tb_cart
+		<where>
+			<foreach collection="list" item="item" open="" close="" separator="OR">
+				(loginID = #{item.loginID} AND item_code = #{item.item_code})
+			</foreach>
+		</where>
+	</delete>
+</mapper>

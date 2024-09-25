@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.happyjob.study.business.dao.BusinessDao">
+	<select id="businessObtainList" resultType="map">
+	    SELECT
+	        ti.inventory_count,
+	        tci.cust_name,
+	        to2.seq,
+	        to2.item_code,
+	        to2.obtain_date,
+	        to2.obtain_count,
+	        to2.depositYN,
+	        tii.item_name,
+	        CONCAT(tci.cust_addr, ' ', tci.cust_detail_addr) AS addr
+	    FROM tb_obtain to2
+	    JOIN tb_cust_info tci ON to2.cust_id = tci.cust_id
+	    JOIN tb_item_info tii ON to2.item_code = tii.item_code
+	    LEFT OUTER JOIN tb_inventory ti ON ti.item_code = to2.item_code
+	    <where>
+	        <if test="(searchTitle != null) and (!''.equals(searchTitle))">
+	            AND tci.cust_name LIKE CONCAT('%', #{searchTitle}, '%')
+	        </if>
+	        <if test="(searchStDate != null) and (!''.equals(searchStDate))">
+	            AND to2.obtain_date <![CDATA[>=]]> STR_TO_DATE(#{searchStDate}, '%Y-%m-%d')
+	        </if>
+	        <if test="(searchEdDate != null) and (!''.equals(searchEdDate))">
+	            AND to2.obtain_date <![CDATA[<=]]> STR_TO_DATE(#{searchEdDate}, '%Y-%m-%d')
+	        </if>
+	    </where>
+	    ORDER BY to2.seq
+	    LIMIT #{startSeq}, #{pageSize}
+	</select>
+
+	<select id="obtainListCnt" resultType="int">
+	    SELECT
+			count(*)
+	    FROM tb_obtain to2
+	    JOIN tb_cust_info tci ON to2.cust_id = tci.cust_id
+	    JOIN tb_item_info tii ON to2.item_code = tii.item_code
+	    LEFT OUTER JOIN tb_inventory ti ON ti.item_code = to2.item_code
+	    <where>
+	        <if test="(searchTitle != null) and (!''.equals(searchTitle))">
+	            AND tci.cust_name LIKE CONCAT('%', #{searchTitle}, '%')
+	        </if>
+	        <if test="(searchStDate != null) and (!''.equals(searchStDate))">
+	            AND to2.obtain_date <![CDATA[>=]]> STR_TO_DATE(#{searchStDate}, '%Y-%m-%d')
+	        </if>
+	        <if test="(searchEdDate != null) and (!''.equals(searchEdDate))">
+	            AND to2.obtain_date <![CDATA[<=]]> STR_TO_DATE(#{searchEdDate}, '%Y-%m-%d')
+	        </if>
+	    </where>
+	</select>
+
+
+	
+	<select id="deliveryManList" resultType ="map" >
+		select name
+		from tb_userinfo
+		where user_type = "D"
+	</select>
+	
+	<select id="getStorageListList" resultType="map">
+	    SELECT
+	        ti.inventory_count,
+	        ts.storage_name,
+	        ts.storage_code
+	    FROM
+	        tb_item_info tii
+	        JOIN tb_inventory ti ON tii.item_code = ti.item_code 
+	        JOIN tb_storage ts ON ti.storage_code = ts.storage_code 
+	    WHERE
+	        tii.item_code = #{Storage_item_code}
+	    GROUP BY
+	        ti.inventory_count,
+	        ts.storage_name
+	</select>
+	
+	<select id="findDeliveryStatus" resultType="Integer">
+		select count(*)
+		from tb_delivery td, tb_obtain tot
+		where td.seq = tot.seq
+		and tot.obtain_date = #{obtain_date}
+		and  td.item_code = #{item_code}
+	</select>
+	
+	<select id="selectDelivery" resultType="map">
+		select *, DATE_FORMAT(td.delivery_date, "%Y-%m-%d") as delivery_date
+		from tb_delivery td, tb_obtain tot, tb_storage ts, tb_item_info tii 
+		where td.seq = tot.seq
+		and tot.obtain_date = #{obtain_date}
+		and  td.item_code = #{item_code}
+		and td.storage_code = ts.storage_code 
+		and tii.item_code  = td.item_code 
+	</select>
+
+
+	<insert id="deliveryInsert" parameterType="map">
+	    INSERT INTO tb_delivery (
+	        delivery_date, delivery_end_loc, obtain_count, 
+	        delivery_name, delivery_state, item_code, storage_code, seq
+	    ) VALUES (
+	        NOW(), #{delivery_end_loc}, #{obtain_count},
+	        #{delivery_name}, '배송중', #{item_code}, 
+	        #{storage_code}, #{seq}
+	    )
+	</insert>
+	
+	<insert id="toOrderInsert" parameterType="map">
+	    INSERT INTO tb_order (
+		    item_code, product_name, order_date, order_count,
+		    signYN, depositYN, company_seq
+		)
+		SELECT
+		    #{item_code},  #{product_name}, NOW(), #{order_count},
+		    'N', 'N', 
+		    toc.company_seq
+		FROM
+		    tb_order_company toc
+		INNER JOIN tb_company_item tci ON toc.company_seq = tci.company_seq
+		INNER JOIN tb_order tot ON tci.item_code = tot.item_code
+		WHERE tot.item_code = #{item_code}
+		Limit 1
+	</insert>
+	
+	<update id="updateDeliveryModal" parameterType="map" >
+		UPDATE tb_delivery AS td
+		JOIN tb_storage AS ts ON td.storage_code = ts.storage_code
+		SET td.delivery_name = #{delivery_name}, 
+ 	  	 td.storage_code = (
+	        SELECT storage_code 
+	        FROM tb_storage 
+	        WHERE storage_name = #{storage_name}
+	   		 )
+		WHERE td.delivery_num = #{delivery_num}
+	</update>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	<select id= "businessorderList" resultType="map">
+		SELECT *
+		FROM tb_obtain to2
+		JOIN tb_item_info tii ON to2.item_code = tii.item_code
+		JOIN tb_inventory ti ON to2.item_code = ti.item_code
+		JOIN tb_cust_info tci ON tci.cust_id = to2.cust_id
+		WHERE ti.inventory_count <![CDATA[<]]> to2.obtain_count
+		<if test="(searchTitle != null) and (!''.equals(searchTitle))">
+		    AND cust_name LIKE CONCAT('%', #{searchTitle}, '%')
+		</if>         
+		<if test="(searchStDate != null) and (!''.equals(searchStDate))">
+		    AND obtain_date <![CDATA[>=]]> STR_TO_DATE(#{searchStDate}, '%Y-%m-%d')
+		</if>
+		<if test="(searchEdDate != null) and (!''.equals(searchEdDate))">
+		    AND obtain_date <![CDATA[<=]]> STR_TO_DATE(#{searchEdDate}, '%Y-%m-%d')
+		</if>
+	</select>
+	
+	
+	<select id="getOrderCompnay" resultType="map">
+		SELECT DISTINCT toc.company_name 
+		from tb_obtain to2, tb_company_item tci, tb_order_company toc 
+		where to2.item_code = tci.item_code 
+		and tci.company_seq = toc.company_seq 
+		and tci.item_code = #{item_code}
+	</select>
+	
+	<select id="getOrderStatus" resultType="Integer">
+		select count(*)
+		from tb_order to2
+		where to2.obtain_date =#{obtain_date}
+		and  to2.item_code = #{item_code}
+	</select>
+	
+	<insert id="insertOrder">
+		INSERT INTO tb_order (
+		    item_code, product_name, order_date, order_count, 
+		    signYN, depositYN, company_seq, obtain_date
+		) 
+		VALUES (
+		      #{item_code}, #{product_name}, now(), #{order_count},
+		    'N', 'N', 
+		    (
+		    SELECT MAX(toc.company_seq)
+		    FROM tb_obtain to2, tb_company_item tci, tb_order_company toc 
+		    WHERE to2.item_code = tci.item_code 
+		    AND tci.company_seq = toc.company_seq 
+		    AND to2.item_code = #{item_code}
+		    ) , #{obtain_date}
+		)
+	</insert>
+	
+
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	<select id="businessreturnList" resultType="map">
+		SELECT *
+		FROM tb_return tr
+		JOIN tb_item_info tii ON tr.item_code = tii.item_code
+		JOIN tb_cust_info tci ON tr.cust_id = tci.cust_id
+		JOIN tb_obtain to2 ON tr.seq = to2.seq
+		JOIN tb_storage ts ON ts.storage_code = tr.storage_code
+		<where>
+			AND tr.signYN = 'Y'
+			<if test="(searchTitle != null) and (!''.equals(searchTitle))">
+				and item_name Like CONCAT('%', #{searchTitle}, '%')
+			</if>			
+			<if test="(searchStDate != null) and (!''.equals(searchStDate))">
+				and tr.return_order_date <![CDATA[>=]]> STR_TO_DATE(#{searchStDate}, '%Y-%m-%d')
+			</if>
+			<if test="(searchEdDate != null) and (!''.equals(searchEdDate))">
+				and tr.return_order_date <![CDATA[<=]]> STR_TO_DATE(#{searchEdDate}, '%Y-%m-%d')
+			</if>
+		</where>
+	</select>
+	
+	<select id="findInsertOrUpdateCntRe" resultType="Integer">
+		SELECT COUNT(*)
+		FROM (
+		    SELECT DISTINCT tr.item_code
+			from tb_return tr, tb_delivery td 
+			where tr.item_code = td.item_code 
+			AND tr.signYn ='Y'
+			AND tr.return_order_date = #{return_order_date}
+			AND tr.item_code = #{item_code}
+		) AS filtered_count
+	</select>
+	
+	<insert id="RE_deliveryInsert" parameterType="map">
+		INSERT INTO tb_delivery (
+		    delivery_date, delivery_end_loc, obtain_count, 
+		    delivery_name, delivery_state, item_code, storage_code, seq
+		)
+		SELECT
+		    NOW(), #{delivery_end_loc}, #{obtain_count},
+		    #{delivery_name}, '배송중', #{item_code},
+		    (SELECT storage_code FROM tb_storage WHERE storage_name = #{storage_name}),
+		    #{seq}
+		FROM dual
+		WHERE NOT EXISTS (
+		    SELECT 1
+		    FROM tb_delivery
+		    WHERE delivery_end_loc = #{delivery_end_loc}
+		    AND obtain_count = #{obtain_count}
+		    AND delivery_name = #{delivery_name}
+		    AND item_code = #{item_code}
+		    AND storage_code = (SELECT storage_code FROM tb_storage WHERE storage_name = #{storage_name})
+		    AND seq = #{seq}
+		)
+	</insert>
+	
+	<select id="getDeliveryReModalSelect" resultType="map">
+		select *, DATE_FORMAT(td.delivery_date, "%Y-%m-%d") as delivery_dateFMT
+		from tb_delivery td, tb_obtain tot, tb_item_info tii , tb_storage ts, tb_inventory ti 
+		where td.seq = tot.seq
+		and tot.obtain_date =#{obtain_date}
+		and  td.item_code = #{item_code}
+		and tot.item_code = tii.item_code 
+		and ti.item_code = td.item_code 
+		and ti.storage_code  = ts.storage_code 
+	</select>
+	
+	<select id="Order_findstatus" resultType="Integer" >
+		SELECT count(*)
+		from tb_delivery td 
+		where td.seq = #{seq}
+	</select>
+	
+	<select id="return_deliverySelect" resultType="map">
+		SELECT td.*, ts.storage_name 
+		FROM tb_delivery td, tb_storage ts
+		WHERE td.storage_code = ts.storage_code 
+		and td.seq = #{seq}
+	</select>	
+
+	
+</mapper>

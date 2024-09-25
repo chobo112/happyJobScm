@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.product.dao.ProductDao">
+
+	<select id="productList" resultType="ProductModel">
+		SELECT
+			item_code	  ,
+			item_name	  ,
+			major_class	  ,
+			sub_class	  ,
+			manufac		  ,
+			item_stand	  ,
+			item_price	  ,
+			item_surtax	  ,
+			item_note	  ,
+			provide_value ,
+			equipment_type,
+			img_path	  ,
+			product_detail
+		FROM
+			tb_item_info
+		<where>
+			<if test="(!''.equals(search_title)) and (search_title != null)">
+			 	and ${search_type} LIKE CONCAT('%', #{search_title}, '%')
+			 </if>
+		</where>
+		LIMIT #{startSeq}, #{pageSize}
+	</select>
+	
+	<select id="productListCnt" resultType="int">
+		SELECT
+			count(*)
+		FROM
+			tb_item_info
+		<where>
+			<if test="(!''.equals(search_title)) and (search_title != null)">
+			 	and ${search_type} LIKE CONCAT('%', #{search_title}, '%')
+			 </if>
+		</where>
+	</select>
+	
+	<select id="productDetail" resultType="productModel">
+		SELECT 
+			item_code	  ,
+			item_name	  ,
+			major_class	  ,
+			sub_class	  ,
+			manufac		  ,
+			item_stand	  ,
+			item_price	  ,
+			item_surtax	  ,
+			item_note	  ,
+			provide_value ,
+			equipment_type,
+			img_path	  ,
+			product_detail
+		FROM tb_item_info
+		<where>
+			<if test="(!''.equals(item_code)) and (item_code != null)">
+				and item_code LIKE (#{item_code})
+			</if>
+		</where>
+	</select>
+
+	<select id="productDuplicateCheck" resultType="Integer">
+		SELECT obtain_count
+		FROM tb_cart
+		WHERE loginID = #{loginID}
+		AND item_code = #{item_code}
+	</select>
+
+	<insert id="productCart">
+		INSERT INTO tb_cart (
+			loginID,
+			item_code,
+			obtain_count
+		) SELECT
+			#{loginID},
+			#{item_code},
+			#{obtain_count}
+		 FROM dual
+		WHERE NOT EXISTS (
+			SELECT 1
+			FROM tb_cart
+			WHERE loginID = #{loginID}
+			AND item_code = #{item_code}
+		)
+	</insert>
+	
+	<insert id="productPay">
+	<selectKey resultType="int" keyProperty="cust_id" order="BEFORE">
+		SELECT cust_id 
+		FROM tb_userinfo
+		WHERE loginID = #{loginID}
+	</selectKey>
+	
+		INSERT INTO tb_obtain (
+			item_code,
+			obtain_date,
+			obtain_count,
+			returnYN,
+			depositYN,
+			cust_id
+		) VALUES (
+			#{item_code},
+			now(),
+			#{count},
+			'N',
+			'Y',
+			#{cust_id}
+		)
+	</insert>
+	
+	<update id="countUpdate">
+		UPDATE tb_cart 
+		SET obtain_count = #{obtain_count}
+		WHERE loginID = #{loginID}
+		AND item_code = #{item_code}
+	</update>
+</mapper>

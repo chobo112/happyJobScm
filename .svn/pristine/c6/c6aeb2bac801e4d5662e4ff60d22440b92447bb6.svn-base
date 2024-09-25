@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.board.dao.InquiryDao">
+	<!-- 카테고리 목록 조회 -->
+	<select id="categoryList" resultType="kr.happyjob.study.board.model.InquiryModel">
+		SELECT 
+					category_code
+					, category_name
+		FROM 	tb_post_category
+		ORDER BY category_code
+	</select>	
+	
+	<!-- 초기 리스트 조회 -->
+	<select id="inquiryList" resultType="kr.happyjob.study.board.model.InquiryModel">
+	/* kr.happyjob.study.board.dao.NoticeDao.noticeList */
+		SELECT 
+			tp.seq,
+			tp.loginID ,
+			tp.post_title ,
+			tp.post_text ,
+			tp.post_date,
+			tp.category_code,
+			tpc.category_name,
+			tp.post_count
+		FROM tb_post tp
+		inner join tb_post_category tpc on tp.category_code = tpc.category_code
+		<where>
+			<if test="(searchTitle != null) and (!''.equals(searchTitle))">
+				and post_title Like CONCAT('%', #{searchTitle}, '%')
+			</if>
+			<if test="(searchStDate != null) and (!''.equals(searchStDate))">
+				and post_date <![CDATA[ >= ]]> STR_TO_DATE(#{searchStDate}, '%Y-%m-%d')
+			</if>
+			<if test="(searchEdDate != null) and (!''.equals(searchEdDate))">
+				and post_date <![CDATA[ <= ]]> STR_TO_DATE(#{searchEdDate}, '%Y-%m-%d')
+			</if>
+		</where>
+		ORDER BY seq DESC
+		LIMIT #{startSeq}, #{pageSize}
+	</select>
+	
+	<!-- 페이징 처리용 총갯수 조회 -->
+	<select id="inquiryListCnt" resultType="int">
+	/* kr.happyjob.study.board.dao.InquiryDao.inquiryListCnt */
+		SELECT 
+			count(*) 
+		FROM tb_post
+		<where>
+			<if test="(searchTitle != null) and (!''.equals(searchTitle))">
+				and post_title Like CONCAT('%', #{searchTitle}, '%')
+			</if>
+			<if test="(searchStDate != null) and (!''.equals(searchStDate))">
+				and post_date <![CDATA[ >= ]]> STR_TO_DATE(#{searchStDate}, '%Y-%m-%d')
+			</if>
+			<if test="(searchEdDate != null) and (!''.equals(searchEdDate))">
+				and post_date <![CDATA[ <= ]]> STR_TO_DATE(#{searchEdDate}, '%Y-%m-%d')
+			</if>
+		</where>
+	</select>
+	
+	<insert id="inquirySave">
+	/* kr.happyjob.study.board.dao.InquiryDao.inquirySave */
+		<selectKey resultType="int" keyProperty="seq" order="BEFORE">
+			SELECT IFNULL(max(seq), 0) + 1 from tb_post
+		</selectKey>
+		insert into tb_post
+			(
+				seq, 
+				loginID,
+				post_title,
+				post_text,
+				post_date,
+				category_code
+			) values (
+				#{seq},
+				#{loginId},
+				#{title},
+				#{content},
+				now(),
+				#{category_code}
+			)
+	</insert>
+	
+	<select id="inquiryDetail" resultType="kr.happyjob.study.board.model.InquiryModel">
+	/* kr.happyjob.study.board.dao.InquiryDao.inquiryDetail */
+		SELECT 
+			seq ,
+			loginID ,
+			post_title ,
+			post_text ,
+			post_date ,
+			category_code
+		FROM tb_post
+		WHERE seq = #{seq}
+	</select>
+	
+		<update id="inquiryUpdate">
+	/* kr.happyjob.study.board.dao.inquiryDao.inquiryUpdate */
+		update tb_post
+		   set 
+		       post_title = #{title} ,
+		       post_text = #{content},
+		       category_code = #{category_code}
+		 where seq = #{seq}
+	</update>
+	
+	
+	<delete id="inquiryDelete">
+		delete from tb_post
+		where seq = #{seq}
+	</delete>
+	
+	<!-- ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ답변 관련 쿼리문ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ -->
+	
+	
+		<select id="answerDetail" resultType="kr.happyjob.study.board.model.InquiryModel">
+	/* kr.happyjob.study.board.dao.InquiryDao.inquiryDetail */
+		SELECT 
+			answer_title ,
+			answer_text ,
+			answer_date 
+		FROM tb_answer
+		WHERE seq = #{seq}
+	</select>
+
+<select id="answerChk" resultType="int">
+	/* kr.happyjob.study.board.dao.InquiryDao.inquiryListCnt */
+		SELECT 
+			count(*) 
+		FROM tb_answer WHERE seq = #{seq}
+
+	</select>
+
+<insert id="answerInsert">
+	/* kr.happyjob.study.board.dao.InquiryDao.answerInsert */
+		insert into tb_answer
+			(
+				seq, 
+				loginID,
+				answer_title,
+				answer_text,
+				answer_date
+			) values (
+				#{seq},
+				#{loginId},
+				#{answer_title},
+				#{answer_content},
+				now()
+			)
+	</insert>
+
+<update id="answerUpdate">
+	/* kr.happyjob.study.board.dao.inquiryDao.answerUpdate */
+		update tb_answer
+		   set 
+		       answer_title = #{answer_title} ,
+		       answer_text = #{answer_content}
+		 where seq = #{seq}
+	</update>
+
+<delete id="answerDelete">
+		delete from tb_answer
+		where seq = #{seq}
+	</delete>
+
+
+</mapper>

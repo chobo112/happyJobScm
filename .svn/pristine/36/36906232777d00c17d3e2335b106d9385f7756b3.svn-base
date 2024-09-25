@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.responsibilities.dao.ResponsibilitiesDao">
+
+	<select id="orderList" resultType="map">
+
+		SELECT
+		   od.seq, oc.company_name, od.product_name, it.item_price, od.order_count, 
+		   (it.item_price * od.order_count) AS total_price, od.order_date, od.signYN, od.depositYN  
+		FROM 
+		    tb_order od
+		LEFT OUTER JOIN
+		    tb_item_info it 
+		ON od.item_code = it.item_code 
+		LEFT OUTER JOIN
+			tb_order_company oc
+		ON oc.company_seq = od.company_seq 
+		<where>
+			<if test="(searchTitle != null) and (!''.equals(searchTitle) and searchSelect == 'company')">
+				and od.order_company Like CONCAT('%', #{searchTitle}, '%')
+			</if>
+			<if test="(searchTitle != null) and (!''.equals(searchTitle) and searchSelect == 'product')">
+				and od.product_name Like CONCAT('%', #{searchTitle}, '%')
+			</if>
+			<if test="(searchStDate != null) and (!''.equals(searchStDate))">
+				and od.order_date <![CDATA[>=]]> STR_TO_DATE(#{searchStDate}, '%Y-%m-%d')
+			</if>
+			<if test="(searchEdDate != null) and (!''.equals(searchEdDate))">
+				and od.order_date <![CDATA[<=]]> STR_TO_DATE(#{searchEdDate}, '%Y-%m-%d')
+			</if>
+
+		</where>
+		ORDER BY od.seq desc
+
+	</select>
+	
+	<update id="deposit">
+	
+		UPDATE 
+			tb_order
+		SET 
+			depositYN = 'Y'
+		WHERE 
+			seq = #{seq} 
+	
+	</update>
+	
+	<select id="deliveryList" resultType="map">
+	
+		SELECT 
+			 d.delivery_num, d.delivery_name, st.storage_name, d.delivery_end_loc, d.delivery_state , DATE_FORMAT(d.delivery_date, "%Y-%m-%d")
+		from 
+			tb_delivery d
+		left join 
+			tb_storage st
+		ON
+			d.storage_code = st.storage_code 
+		<where>
+			<if test="(searchTitle != null) and (!''.equals(searchTitle))">
+				and d.delivery_name Like CONCAT('%', #{searchTitle}, '%')
+			</if>
+			<if test="(searchStDate != null) and (!''.equals(searchStDate))">
+				and d.delivery_date <![CDATA[>=]]> STR_TO_DATE(#{searchStDate}, '%Y-%m-%d')
+			</if>
+			<if test="(searchEdDate != null) and (!''.equals(searchEdDate))">
+				and d.delivery_date <![CDATA[<=]]> STR_TO_DATE(#{searchEdDate}, '%Y-%m-%d')
+			</if>
+			<if test="(type != null) and (!''.equals(type)) and (type == 'ing')" >
+				and d.delivery_state = '배송중'
+			</if>
+			<if test="(type != null) and (!''.equals(type)) and (type == 'done')" >
+				and d.delivery_state = '배송완료'
+			</if>
+		</where>
+	
+	</select>
+
+
+	<select id="deliveryDetail" resultType="map">
+	
+		SELECT 
+			d.obtain_count , ti.item_name, d.delivery_num ,d.delivery_state
+		from 
+			tb_delivery d
+		left join 
+			tb_item_info ti
+		ON
+			d.item_code = ti.item_code
+		where 
+			d.delivery_num = #{delivery_num}
+			
+	</select>
+	
+	<update id="deleveryDone">
+		
+			UPDATE tb_delivery 
+			set delivery_state = '배송완료'
+			WHERE delivery_num = #{delivery_num}
+		
+	</update>
+	
+	<select id="doneObj" resultType="map">
+	
+		SELECT dl.item_code , dl.obtain_count, dl.storage_code 
+		from tb_delivery dl
+		WHERE delivery_num = #{delivery_num}
+	
+	</select>
+	
+	<update id="storInven" parameterType="map">
+	
+		UPDATE tb_inventory ti
+		LEFT JOIN tb_storage ts ON ti.storage_code = ts.storage_code
+		SET ti.inventory_count = ti.inventory_count - #{obtain_count}
+		WHERE ti.item_code = #{item_code}
+		  AND ts.storage_code = #{storage_code}
+		
+	</update>
+
+</mapper>

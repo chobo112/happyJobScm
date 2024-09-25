@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.sampletest.dao.SampletestNoticeDao">
+
+	<!-- 공지사항 목록 조회 -->
+	<select id="listnotice" resultType="kr.happyjob.study.sampletest.model.SamplenoticeModel">
+		/*kr.happyjob.study.sampletest.dao.SampletestNoticeDao.listnotice*/
+        select n.ntc_no
+             , n.loginID
+             , n.ntc_title
+             , n.ntc_content
+             , DATE_FORMAT(n.ntc_regdate, '%Y-%m-%d') as ntc_regdate
+             , n.file_name
+             , n.logical_path
+             , n.phygical_path
+             , n.file_size
+             , n.file_ext
+             , ui.name as writer
+       from tb_notice n
+              inner join tb_userinfo ui on ui.loginID = n.loginID
+              <where>
+                <if test="(stitle != null) and (!stitle.equals(''))">
+                     and n.ntc_title like concat('%',#{stitle},'%')
+                </if>
+
+                <if test="(ssdate != null) and (!ssdate.equals(''))">
+                     and n.ntc_regdate <![CDATA[>=]]>  STR_TO_DATE( #{ssdate}, '%Y-%m-%d')
+                </if>              
+                 
+                <if test="(sedate != null) and (!sedate.equals(''))">
+                     and n.ntc_regdate <![CDATA[<=]]>  STR_TO_DATE( #{sedate}, '%Y-%m-%d')
+                </if>  
+              </where>
+		ORDER BY n.ntc_regdate DESC
+		limit #{startpoint} , #{pagesize}
+	</select>
+	
+	<!-- 그룹코드 목록 총 갯수 조회 -->
+	<select id="totalcntnotice" resultType="int">
+		/*kr.happyjob.study.sampletest.dao.SampletestNoticeDao.totalcntnotice*/
+      select count(*)
+       from tb_notice n
+              inner join tb_userinfo ui on ui.loginID = n.loginID
+              <where>
+                <if test="(stitle != null) and (!stitle.equals(''))">
+                     and n.ntc_title like concat('%',#{stitle},'%')
+                </if>
+
+                <if test="(ssdate != null) and (!ssdate.equals(''))">
+                     and n.ntc_regdate <![CDATA[>=]]>  STR_TO_DATE( #{ssdate}, '%Y-%m-%d')
+                </if>              
+                 
+                <if test="(sedate != null) and (!sedate.equals(''))">
+                     and n.ntc_regdate <![CDATA[<=]]>  STR_TO_DATE( #{sedate}, '%Y-%m-%d')
+                </if>  
+              </where>
+	</select>
+	
+	<select id="selectnotice"  resultType="kr.happyjob.study.sampletest.model.SamplenoticeModel">
+	   /*kr.happyjob.study.sampletest.dao.SampletestNoticeDao.selectnotice*/
+        select n.ntc_no
+             , n.loginID
+             , n.ntc_title
+             , n.ntc_content
+             , DATE_FORMAT(n.ntc_regdate, '%Y-%m-%d') as ntc_regdate
+             , n.file_name
+             , n.logical_path
+             , n.phygical_path
+             , n.file_size
+             , n.file_ext
+             , ui.name as writer
+       from tb_notice n
+              inner join tb_userinfo ui on ui.loginID = n.loginID
+	  where n.ntc_no = #{noticeNo}
+	</select>
+	
+	
+	<insert id="insertnotice">
+	    <selectKey keyProperty="selmotice" resultType="int" order="BEFORE"> 
+	   	     SELECT IFNULL(MAX(ntc_no),0) +1  FROM tb_notice
+	    </selectKey>
+	       
+	    insert into tb_notice
+	                 (  
+	                    ntc_no
+                      , loginID
+                      , ntc_title
+                      , ntc_content
+                      , ntc_regdate
+                    ) values (
+                       #{selmotice}
+                     , #{loginID}
+                     , #{noticeTitle}
+                     , #{noticeContent}
+                     , now()
+                    )
+	</insert>
+	
+	<update id="updatenotice" >
+	     update tb_notice
+	          set loginID = #{loginID}
+                 , ntc_title = #{noticeTitle}
+                 , ntc_content = #{noticeContent}
+                 , ntc_regdate = now()
+	     where ntc_no = #{noticeNo}
+	</update>
+	
+	<delete id="deletenotice">
+	    delete from tb_notice
+	    where ntc_no = #{noticeNo}
+	</delete>
+	
+		<insert id="insertnoticefile">
+	    <selectKey keyProperty="selmotice" resultType="int" order="BEFORE"> 
+	   	     SELECT IFNULL(MAX(ntc_no),0) +1  FROM tb_notice
+	    </selectKey>
+	       
+	    insert into tb_notice
+	                 (  
+	                    ntc_no
+                      , loginID
+                      , ntc_title
+                      , ntc_content
+                      , ntc_regdate
+                      <if test="fileexits eq 'Y'.toString()">
+                      , file_name
+                      , logical_path
+                      , phygical_path
+                      , file_size
+                      , file_ext
+                      </if>
+                    ) values (
+                       #{selmotice}
+                     , #{loginID}
+                     , #{noticeTitle}
+                     , #{noticeContent}
+                     , now()
+                     <if test="fileexits eq 'Y'.toString()">
+                     , #{fileinfo.file_nm}
+                     , #{fileinfo.vrfile_loc}
+                     , #{fileinfo.file_loc}
+                     , #{fileinfo.file_size}
+                     , #{fileinfo.fileExtension}
+                     </if>
+                    )
+	</insert>
+	
+	<update id="updatenoticefile">
+	     update tb_notice
+	          set loginID = #{loginID}
+                 , ntc_title = #{noticeTitle}
+                 , ntc_content = #{noticeContent}
+                 , ntc_regdate = now()
+                 <if test="fileexits eq 'Y'.toString()">
+                 , file_name = #{fileinfo.file_nm}
+                 , logical_path = #{fileinfo.vrfile_loc}
+                 , phygical_path = #{fileinfo.file_loc}
+                 , file_size = #{fileinfo.file_size}
+                 , file_ext = #{fileinfo.fileExtension}
+                 </if>
+	     where ntc_no = #{noticeNo}
+	</update>
+	
+</mapper>

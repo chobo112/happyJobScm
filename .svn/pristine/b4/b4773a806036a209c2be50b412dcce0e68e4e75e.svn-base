@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.direction.dao.DirectionDao">
+
+<!-- searchOrderList 쿼리 -->
+<select id="searchOrderList" parameterType="kr.happyjob.study.direction.model.TB_order" resultType="kr.happyjob.study.direction.model.TB_order">
+    SELECT DISTINCT 
+        info.item_code as item_code,
+        info.item_name as item_name,
+        tord.order_date as order_date,
+        tord.order_count as order_count,
+        toc.company_name as order_company
+    FROM tb_order tord
+    JOIN tb_item_info info ON tord.item_code = info.item_code
+    JOIN tb_order_company toc ON tord.company_seq = toc.company_seq 
+    <where>
+        <if test="order_company != null and order_company != ''">
+            AND toc.company_name LIKE CONCAT('%', #{order_company}, '%')
+        </if>
+        <if test="searchStDate != null and searchStDate != ''">
+            AND tord.order_date <![CDATA[ >= ]]> STR_TO_DATE(#{searchStDate}, '%Y-%m-%d')
+        </if>
+        <if test="searchEdDate != null and searchEdDate != ''">
+            AND tord.order_date <![CDATA[ <= ]]> STR_TO_DATE(#{searchEdDate}, '%Y-%m-%d')
+        </if>
+    </where>
+</select>
+
+
+
+</mapper>
